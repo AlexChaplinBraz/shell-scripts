@@ -1,0 +1,480 @@
+#!/usr/bin/env sh
+
+# Readable password generator.
+
+# Extracts words in order from a selected file and inserts special characters
+# at random places to generate a readable password.
+# Written based on a Computerphile video:
+# How to Choose a Password: https://youtu.be/3NjQ9b3pgIg
+
+# The point of this script is to replace the standard password generation
+# that is very hard to input manually with a, still very secure,
+# but much easier to write password, for the rare occasion where you have
+# to input it manualy, like on a smartphone you're not syncing them to.
+
+# MIT License
+#
+# Copyright (c) 2020 Alexander Chaplin Braz (http://alexchaplinbraz.com)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Global variables (with sensible defaults):
+Replace=
+Capitalize=
+MaxResets=5
+MinPassLen=24
+MaxPassLen=30
+FixedPassLen=
+NumAmount=2
+SpeCharsAmount=2
+SpeChars="#%!@+-_="
+FilePath=""
+UseSource=
+CopyToClipboard=
+Debug=
+TransAccents=
+UpperAmount=3
+LowerAmount=3
+ForceUpper=
+ForceLower=
+UnForceUpper=
+UnForceLower=
+UpperChars="ABCDEFGHIJKMLNOPQRSTUVWXYZ"
+LowerChars="abcdefghijklmnopqrstuvwxyz"
+ResetCounter=0
+Version=1.0.0
+Password=""
+ScriptName="$(basename "$0")"
+
+suggest_help() {
+	printf "Try '%s --help' for more information.\n" "$ScriptName"
+}
+
+HelpMessage="$ScriptName - Version: $Version
+Creator: Alexander Chaplin Braz (http://alexchaplinbraz.com)
+License: MIT
+
+Usage:
+    $ScriptName [opts] {-f <path> | --file <path> | -s | --use-source} [opts]
+
+Examples:
+Use the script's own source code, capitalize every word and copy to clipboard:
+    $ScriptName -sCc
+
+Use the file \"Journal-2020.md\", translate all accented characters, capitalize
+every word and copy to clipboard:
+    $ScriptName -tCcf \"\$HOME/Documents/Journal-2020.md\"
+
+Use the script's own source code, containing 10 special characters and
+with a length between 30 and 50 characters:
+    $ScriptName -s --min-pass-len 30 --max-pass-len 50 --spechars-amount 10
+
+Options:
+    -h | --help                  Display this help message and exit.
+    -v | --version               Display version and exit.
+    -d | --debug                 Display variable values and output the password
+                                 at each step of the process, plus extras.
+    -s | --use-source            Use this script's own source code as file.
+                                 Provided to easily check how the script works
+                                 with the '--debug' option, but shouldn't
+                                 really be used for your real passwords.
+    -c | --clipboard             Copy the password to clipboard using xclip.
+    -C | --capitalize            Capitalize each word, making it easier to read.
+    -r | --replace               Instead of inserting special characters and
+                                 numbers, replace the password characters.
+    -t | --translate-accents     Translate accented characters to their normal
+                                 forms, thus keeping them from being parsed out.
+                                 Only works for UTF-8 encoded files.
+    -f <path> | --file <path>    Specify a file to use for password generation.
+    -A | --max-resets <num>      Maximum amount of resets before the password
+                                 is trimmed to the maximum password length.
+                                 Default: $MaxResets
+    -B | --min-pass-len <num>    Minumum password length.
+                                 Default: $MinPassLen
+    -N | --max-pass-len <num>    Maximum password length.
+                                 Default: $MaxPassLen
+    -D | --num-amount <num>      Amount of numbers to insert.
+                                 Default: $NumAmount
+    -E | --spechars-amount <num> Amount of special characters to insert.
+                                 Default: $SpeCharsAmount
+    -F | --spechars <chars>      List of special characters to insert.
+                                 Avoid using '&' and '$' due to them messing
+                                 up the script and $ being interpreted as a
+                                 variable in the shell.
+                                 Default: $SpeChars
+    -G | --upper-amount <num>    Amount of letters to be capitalized.
+                                 Default: $UpperAmount
+    -H | --lower-amount <num>    Amount of letters to be decapitalized.
+                                 Default: $LowerAmount
+    -I | --force-upper           Force the password to have a number of
+                                 uppercase letters, based on '--upper-amount'.
+                                 Gets automatically turned on if there are
+                                 no uppercase letters at all.
+    -J | --force-lower           Force the password to have a number of
+                                 lowercase letters, based on '--lower-amount'.
+                                 Gets automatically turned on if there are
+                                 no lowercase letters at all.
+    -K | --fixed-pass-len <num>  Instead of getting a password with a random
+                                 length in a certain range, specify it.
+                                 This option overrides '--min-pass-len'
+                                 and '--max-pass-len'.
+    -L | --unforce-upper         Prevent the automatic capitalization when
+                                 there are no uppercase letters.
+                                 Gets ignored if '--force-upper' is set.
+    -M | --unforce-lower         Prevent the automatic decapitalization when
+                                 there are no lowercase letters.
+                                 Gets ignored if '--force-lower' is set.
+"
+
+# Translate the long options into short options for getopts:
+reset=true
+for arg in "$@"
+do
+	if [ $reset ]; then
+		unset reset
+		set --
+	fi
+	case "$arg" in
+		--help) set -- "$@" -h;;
+		--version) set -- "$@" -v;;
+		--debug) set -- "$@" -d;;
+		--use-source) set -- "$@" -s;;
+		--clipboard) set -- "$@" -c;;
+		--capitalize) set -- "$@" -C;;
+		--replace) set -- "$@" -r;;
+		--file) set -- "$@" -f;;
+		--translate-accents) set -- "$@" -t;;
+		--max-resets) set -- "$@" -A;;
+		--min-pass-len) set -- "$@" -B;;
+		--max-pass-len) set -- "$@" -N;;
+		--num-amount) set -- "$@" -D;;
+		--spechars-amount) set -- "$@" -E;;
+		--spechars) set -- "$@" -F;;
+		--upper-amount) set -- "$@" -G;;
+		--lower-amount) set -- "$@" -H;;
+		--force-upper) set -- "$@" -I;;
+		--force-lower) set -- "$@" -J;;
+		--fixed-pass-len) set -- "$@" -K;;
+		--unforce-upper) set -- "$@" -L;;
+		--unforce-lower) set -- "$@" -M;;
+		*) set -- "$@" "$arg";;
+	esac
+done
+
+# Function for getting the '-short | --long':
+shtong() {
+	case "$1" in
+		h) printf "%s" "-h | --help";;
+		v) printf "%s" "-v | --version";;
+		d) printf "%s" "-d | --debug";;
+		s) printf "%s" "-s | --use-source";;
+		c) printf "%s" "-c | --clipboard";;
+		C) printf "%s" "-C | --capitalize";;
+		r) printf "%s" "-r | --replace";;
+		f) printf "%s" "-f | --file";;
+		t) printf "%s" "-t | --translate-accents";;
+		A) printf "%s" "-A | --max-resets";;
+		B) printf "%s" "-B | --min-pass-len";;
+		N) printf "%s" "-N | --max-pass-len";;
+		D) printf "%s" "-D | --num-amount";;
+		E) printf "%s" "-E | --spechars-amount";;
+		F) printf "%s" "-F | --spechars";;
+		G) printf "%s" "-G | --upper-amount";;
+		H) printf "%s" "-H | --lower-amount";;
+		I) printf "%s" "-I | --force-upper";;
+		J) printf "%s" "-J | --force-lower";;
+		K) printf "%s" "-K | --fixed-pass-len";;
+		L) printf "%s" "-L | --unforce-upper";;
+		M) printf "%s" "-M | --unforce-lower";;
+		*) printf "%s" "$1"
+	esac
+}
+
+# Parse the options:
+while getopts ":hvdscCrf:tA:B:N:D:E:F:G:H:IJK:LM" opt; do
+	case "$opt" in
+		h)	printf "%s" "$HelpMessage"
+			exit;;
+		v)	printf "%s - Version %s\n" "$ScriptName" "$Version"
+			exit;;
+		d)	Debug=true;;
+		s)	UseSource=true;;
+		c)	CopyToClipboard=true;;
+		C)	Capitalize=true;;
+		r)	Replace=true;;
+		f)	FilePath="$OPTARG";;
+		t)	TransAccents=true;;
+		A)	MaxResets=$OPTARG;;
+		B)	MinPassLen=$OPTARG;;
+		N)	MaxPassLen=$OPTARG;;
+		D)	NumAmount=$OPTARG;;
+		E)	SpeCharsAmount=$OPTARG;;
+		F)	SpeChars="$OPTARG";;
+		G)	UpperAmount=$OPTARG;;
+		H)	LowerAmount=$OPTARG;;
+		I)	ForceUpper=true;;
+		J)	ForceLower=true;;
+		K)	FixedPassLen=$OPTARG;;
+		L)	UnForceUpper=true;;
+		M)	UnForceLower=true;;
+		\?)	printf "INVALID OPTION: '-%s'\n" "$OPTARG"
+			suggest_help
+			exit 1;;
+		:)	printf "MISSING ARGUMENT for option '%s'\n" "$(shtong "$OPTARG")"
+			suggest_help
+			exit 1;;
+	esac
+done
+shift $((OPTIND - 1))
+
+if [ $Debug ]; then
+	printf "Debug Mode\n\n"
+	printf "Replace: %s\n" $Replace
+	printf "Capitalize: %s\n" $Capitalize
+	printf "UseSource: %s\n" $UseSource
+	printf "FilePath: %s\n" "$FilePath"
+	printf "CopyToClipboard: %s\n" $CopyToClipboard
+	printf "MaxResets: %s\n" $MaxResets
+	printf "MinPassLen: %s\n" $MinPassLen
+	printf "MaxPassLen: %s\n" $MaxPassLen
+	printf "FixedPassLen: %s\n" $FixedPassLen
+	printf "NumAmount: %s\n" $NumAmount
+	printf "SpeCharsAmount: %s\n" $SpeCharsAmount
+	printf "SpeChars: %s\n" "$SpeChars"
+	printf "Debug: %s\n" $Debug
+	printf "TransAccents: %s\n" $TransAccents
+	printf "UpperAmount: %s\n" $UpperAmount
+	printf "LowerAmount: %s\n" $LowerAmount
+	printf "ForceUpper: %s\n" $ForceUpper
+	printf "ForceLower: %s\n" $ForceLower
+	printf "UnForceUpper: %s\n" $UnForceUpper
+	printf "UnForceLower: %s\n" $UnForceLower
+fi
+
+# Get the text to use for password generation:
+if [ $UseSource ] && [ "$FilePath" ]; then
+	printf "ERROR: Can't use source and provide a file at the same time.\n"
+	suggest_help
+	exit 1
+elif [ $UseSource ]; then
+	Text=$(cat "$0")
+elif [ "$FilePath" ]; then
+	Text=$(cat "$FilePath")
+	[ ! "$Text" ] && exit 1
+else
+	printf "ERROR: No file was provided.\n"
+	suggest_help
+	exit 1
+fi
+
+# Calculate the correct MaxPassLen if inserting:
+[ ! $Replace ] && MaxPassLen=$((MaxPassLen - SpeCharsAmount - NumAmount))
+[ $Debug ] && printf "MaxPassLen when Replace is off: %s\n" $MaxPassLen
+
+# Calculate the correct MinPassLen if inserting:
+[ ! $Replace ] && MinPassLen=$((MinPassLen - SpeCharsAmount - NumAmount))
+[ $Debug ] && printf "MinPassLen when Replace is off: %s\n\n" $MinPassLen
+
+# Check that MaxPassLen isn't lower than MinPassLen:
+[ $MaxPassLen -lt $MinPassLen ] && \
+	printf "INVALID ARGUMENTS: '%s' can't be lower than '%s'.\n" \
+		"$(shtong N)" "$(shtong B)" && \
+	exit 1
+
+# Set fixed password length if set:
+if [ $FixedPassLen ]; then
+	[ ! $Replace ] && MaxPassLen=$((FixedPassLen - SpeCharsAmount - NumAmount))
+	[ $Replace ] && MaxPassLen=$FixedPassLen
+	[ ! $Replace ] && MinPassLen=$((FixedPassLen - SpeCharsAmount - NumAmount))
+	[ $Replace ] && MinPassLen=$FixedPassLen
+fi
+
+# Get rid of accents on characters so they aren't lost:
+if [ $TransAccents ]; then
+	[ "$(uchardet "$FilePath")" = "UTF-8" ] && Text=$(printf "%s" "$Text" \
+		| iconv -f UTF-8 -t ASCII//TRANSLIT)
+fi
+
+# Separate every word to a new numbered line and only keep [A-Za-z]:
+CleanText=$(printf "%s" "$Text" \
+	| tr -cd '\12\40\101-\132\141-\172' \
+	| tr -s ' ' '\n' \
+	| nl -n ln)
+
+# Total amount of words:
+TextWC=$(printf "%s" "$CleanText" | wc -l)
+
+# Generate a random starting point:
+index=$(shuf -i 1-$TextWC -n1)
+
+# Generate the word-only password:
+while true ; do
+	if [ $Capitalize ]; then
+		Password=$Password$(printf "%s" "$CleanText" \
+		| grep -w ^$index \
+		| awk '{printf $2}' \
+		| sed 's/./\U&/')
+		[ $Debug ] && printf "%s\n" "$Password"
+	else
+		Password=$Password$(printf "%s" "$CleanText" \
+		| grep -w ^$index \
+		| awk '{printf $2}')
+		[ $Debug ] && printf "%s\n" "$Password"
+	fi
+	[ $ResetCounter -ge $MaxResets ] && \
+		Password=$(printf "%s" "$Password" \
+		| cut -c1-$MaxPassLen)
+	[ ${#Password} -gt $MaxPassLen ] && Password=""
+	[ -z "$Password" ] && ResetCounter=$((ResetCounter + 1))
+	[ ${#Password} -ge $MinPassLen ] && break
+	index=$((index + 1))
+	[ $index -gt $TextWC ] && index=1
+done
+
+[ $Debug ] && \
+	printf "\n%s <-- Character Count: %s\n" \
+	"$Password" \
+	$(printf "%s" "$Password" | wc -m)
+
+# Generate random, non-repeated positions so that the same characters
+# aren't replaced more than once:
+if [ $Replace ]; then
+	Positions=$(shuf -i \
+		1-${#Password} \
+		-n$((SpeCharsAmount + NumAmount)) \
+		| nl -n ln)
+	[ $Debug ] && printf "\n%s\n" "$Positions"
+fi
+
+# Add special characters to the password:
+index=0
+while [ $index -lt $SpeCharsAmount ]; do
+	if [ $Replace ]; then
+		char=$(printf "%s" "$SpeChars" \
+			| cut -c"$(shuf -i 1-${#SpeChars} -n1)")
+		pos=$(printf "%s" "$Positions" \
+			| grep -w ^$((index + 1)) \
+			| awk '{printf $2}')
+		[ $Debug ] && printf "%s at %s  " "$char" $pos
+		Password=$(printf "%s" "$Password" \
+			| sed s/./"$char"/$pos)
+	else
+		char=$(printf "%s" "$SpeChars" \
+			| cut -c"$(shuf -i 1-${#SpeChars} -n1)")
+		pos=$(shuf -i 1-${#Password} -n1)
+		[ $Debug ] && printf "%s at %s  " "$char" $pos
+		Password=$(printf "%s" "$Password" \
+			| sed s/./"$char"\&/$pos)
+	fi
+	index=$((index + 1))
+done
+
+[ $Debug ] && \
+	printf "\n%s <-- Character Count: %s\n" \
+	"$Password" \
+	$(printf "%s" "$Password" | wc -m)
+
+# Add numbers to the password:
+index=0
+while [ $index -lt $NumAmount ]; do
+	if [ $Replace ]; then
+		char=$(shuf -i 0-9 -n1)
+		pos=$(printf "%s" "$Positions" \
+			| grep -w ^$((index + 1 + SpeCharsAmount)) \
+			| awk '{printf $2}')
+		[ $Debug ] && printf "%s at %s  " "$char" $pos
+		Password=$(printf "%s" "$Password" \
+			| sed s/./"$char"/$pos)
+	else
+		char=$(shuf -i 0-9 -n1)
+		pos=$(shuf -i 1-${#Password} -n1)
+		[ $Debug ] && printf "%s at %s  " "$char" $pos
+		Password=$(printf "%s" "$Password" \
+			| sed s/./"$char"\&/$pos)
+	fi
+	index=$((index + 1))
+done
+
+[ $Debug ] && \
+	printf "\n%s <-- Character Count: %s\n" \
+	"$Password" \
+	$(printf "%s" "$Password" | wc -m)
+
+# Calculate the amount of uppercase letters:
+UpperCount=$(printf "%s" "$Password" | tr -cd "$UpperChars" | wc -m)
+[ $Debug ] && printf "\nUpper Count: %s" $UpperCount
+
+# Force capitalization when there are no uppercase letters:
+[ $UpperCount -eq 0 ] && [ ! $UnForceUpper ] && ForceUpper=true
+[ $Debug ] && printf "\nForce Upper: %s" $ForceUpper
+
+# Capitalize a number of letters:
+index=1
+while [ $ForceUpper ] && [ $index -le $UpperAmount ]; do
+	char=$(expr substr "$Password" $pos 1)
+	pos=$(shuf -i 1-${#Password} -n1)
+	[ $Debug ] && printf "\n%s at %s" "$char" $pos
+	if printf "%s" "$char" | grep -q "[a-z]"; then
+		char=$(printf "%s" "$char" | tr '[:lower:]' '[:upper:]')
+		[ $Debug ] && printf "\n%s at %s <-- To Upper" "$char" $pos
+		Password=$(printf "%s" "$Password" \
+			| sed s/./"$char"/$pos)
+		[ $Debug ] && printf "\n%s" "$Password"
+		index=$((index + 1))
+	elif ! printf "%s" "$Password" | grep -q "[a-z]"; then
+		[ $Debug ] && printf "\nAll characters are uppercase\n"
+		break
+	fi
+done
+
+# Calculate the amount of lowercase letters:
+LowerCount=$(printf "%s" "$Password" | tr -cd "$LowerChars" | wc -m)
+[ $Debug ] && printf "\nLower Count: %s" $LowerCount
+
+# Force decapitalization when there are no lowercase letters:
+[ $LowerCount -eq 0 ] && [ ! $UnForceLower ] && ForceLower=true
+[ $Debug ] && printf "\nForce Lower: %s" $ForceLower
+
+# Decapitalize a number of letters:
+index=1
+while [ $ForceLower ] && [ $index -le $LowerAmount ]; do
+	char=$(expr substr "$Password" $pos 1)
+	pos=$(shuf -i 1-${#Password} -n1)
+	[ $Debug ] && printf "\n%s at %s" "$char" $pos
+	if printf "%s" "$char" | grep -q "[A-Z]"; then
+		char=$(printf "%s" "$char" | tr '[:upper:]' '[:lower:]')
+		[ $Debug ] && printf "\n%s at %s <-- To Lower" "$char" $pos
+		Password=$(printf "%s" "$Password" \
+			| sed s/./"$char"/$pos)
+		[ $Debug ] && printf "\n%s" "$Password"
+		index=$((index + 1))
+	elif ! printf "%s" "$Password" | grep -q "[A-Z]"; then
+		[ $Debug ] && printf "\nAll characters are lowercase\n"
+		break
+	fi
+done
+
+[ $Debug ] && printf "\n\nResulting Password:\n%s\n" "$Password"
+
+# Output resulting password:
+if [ $CopyToClipboard ]; then
+	printf "%s" "$Password" | xclip -selection clipboard
+elif [ ! $Debug ]; then
+	printf "%s" "$Password"
+fi
