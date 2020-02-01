@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+# Rsync wrapper for backing up $HOME with dated, incremental versioning.
+
+Versioning="/backup/home/versioning/$(date +"%Y-%m-%d.%H-%M-%S")"
+mkdir "$Versioning"
+sudo rsync -abv --progress \
+	--backup-dir="$Versioning" --delete \
+	--exclude=".cache/" \
+	--exclude=".local/share/vbvms/" \
+	--exclude="down/" \
+	--exclude="src/blender-git/" \
+	--exclude="opt/" \
+	--exclude=".local/share/qutebrowser/" \
+	--exclude=".local/share/xorg/" \
+	--exclude=".config/google-chrome/" \
+	--exclude=".local/share/vifm/Trash/" \
+	"$HOME/" \
+	"/backup/home/alex"

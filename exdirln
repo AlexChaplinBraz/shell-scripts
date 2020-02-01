@@ -1,0 +1,58 @@
+#!/usr/bin/env sh
+
+# Link all executable files inside one directory into another.
+
+ScriptName="$(basename "$0")"
+
+HelpMessage="$ScriptName links all the executable files inside one directory
+into another directory replacing any existing links and requires two arguments.
+
+First argument is the directory where the files to be linked are located.
+	Use -c for current directory.
+
+Second argument is the directory where to link them.
+	Use -b for \$LBIN, if it's set to the local bin folder by the user.
+"
+
+suggest_help() {
+	printf "Try '%s --help' for more information.\n" "$ScriptName"
+}
+
+[ "$1" = "-h" ] || [ "$1" = "--help" ] && \
+	printf "$HelpMessage" &&
+	exit 1
+
+if [ -z "$1" ]; then
+	printf "ERROR: a source directory is required.\n"
+	suggest_help
+	exit 1
+elif [ "$1" = "-c" ]; then
+	Directory1="$(pwd)"
+elif [ -d "$1" ]; then
+	Directory1="$(printf "%s" "$1" | sed 's/\/$//')"
+else
+	printf "ERROR: invalid source directory.\n"
+	suggest_help
+	exit 1
+fi
+
+if [ -z "$2" ]; then
+	printf "ERROR: a target directory is required.\n"
+	suggest_help
+	exit 1
+elif [ "$2" = "-b" ]; then
+	Directory2="$(printf "%s" "$LBIN" | sed 's/\/$//')"
+elif [ -d "$2" ]; then
+	Directory2="$(printf "%s" "$2" | sed 's/\/$//')"
+else
+	printf "ERROR: invalid target directory.\n"
+	suggest_help
+	exit 1
+fi
+
+Files="$(find "$Directory1" -maxdepth 1 -type f \
+	-perm /111 -exec basename {} \; )"
+
+for file in $Files; do
+	ln -sf "$Directory1/$file" "$Directory2/$file"
+done

@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+# Script for updating Blender master.
+
+python "$HOME/src/BlenderUpdaterCLI/BlenderUpdaterCLI.py" \
+	-p "$HOME/opt/blendermaster/" \
+	-t "$HOME/opt/blendertemp/" \
+	-b 2.83 -n -o "linux"

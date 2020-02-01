@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+# Save lists of installed programs.
+
+find $HOME/src -maxdepth 1 -type d -exec basename {} \; \
+	> "$LSHARE/installed_packages/source"
+printf "Saved list of programs installed from source.\n"
+
+pacman -Qqen > "$LSHARE/installed_packages/official"
+printf "Saved list of explicitly installed packages.\n"
+
+pacman -Qqem > "$LSHARE/installed_packages/aur"
+printf "Saved list of AUR installed packages.\n\n"
