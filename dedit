@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+
+# Dmenu for quickly finding and opening files to edit.
+# If '-r' is passed, it will search root relevant files and edit as root.
+
+# Find the files to be displayed:
+if [ "$1" = "-r" ]; then
+	Files=$(sudo find "/etc" -type f)
+	AsRoot=" as root"
+else
+	Files1=$(find "$LBIN" -type l)
+	Files2=$(find "$HOME" "$LSHARE" -maxdepth 1 -type f)
+	Files3=$(find "$HOME/notes" "$XDG_CONFIG_HOME" "$LBIN" -type f)
+
+	# Exclude some paths:
+	Files=$(printf "%s\n%s\n%s" "$Files1" "$Files2" "$Files3" \
+		| grep -Ev \
+		".tdb|.sql|dump|eb26f4|google-chrome|VirtualBox|BraveSoftware")
+fi
+
+# Choose the file to open:
+Chosen="$(printf "%s" "$Files" \
+	| dmenu -i -l 30 -p "Select a file to edit${AsRoot}:")"
+
+# Exit if no file was chosen:
+[ -z "$Chosen" ] && exit
+
+# Open the editor with the selected file:
+if [ "$1" = "-r" ]; then
+	sudo $EDITOR "$Chosen"
+else
+	$EDITOR "$Chosen"
+fi

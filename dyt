@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+# Dmenu for opening youtube-viewer.
+
+youtube-viewer $(printf "" \
+	| dmenu -p "YT search:")

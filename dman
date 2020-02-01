@@ -1,0 +1,30 @@
+#!/usr/bin/env sh
+
+# Dmenu for easily finding a manual to open from a list of all manuals.
+
+# Set a character width:
+#export MANWIDTH=80
+
+man $(apropos --long . | dmenu -i -l 30 | awk '{print $2, $1}' | tr -d '()')
+
+# Probably the most useful script ever.
+
+# There are some manuals that have the same name but different sections
+# denoted with what's inside (), one useful section to know is
+# the POSIX version of the manuals which are #p,
+# so just typing p) shows you the POSIX version (most of the time).
+# For more information read the initial part of the man-pages manual
+# and search 'intro' with this script.
+
+# Keep in mind that newly installed programs with man pages tend not to appear
+# right away because the manual database hasn't been updated yet.
+# Depending on the system, it may be updated with a cron job, during boot, etc.
+# If you want to update it manually, run:
+# sudo mandb
+
+# Ideally it would run every time a program is installed/uninstalled,
+# but it seems a pain to set it up.
+# It takes a few seconds to finish, which is a bummer,
+# because I would have just put it at the start of this script.
+# I could also just make a wrapper script for pacman that runs "sudo mandb"
+# quietly if the un/installation was completed successfully.

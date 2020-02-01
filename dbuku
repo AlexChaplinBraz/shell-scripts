@@ -1,0 +1,125 @@
+#!/usr/bin/env sh
+
+# Dmenu for saving the currently open website into buku.
+
+# Instructions for saving:
+# Currently works for qutebrowser and chromium based browsers.
+# Press TAB to autocomplete the default so you can edit it.
+# Press ENTER to accept your changes (if you did nothing it'll be the default).
+# Press ESCAPE to go with the default value (in case of tags it'll accept them).
+# To cancel out of adding it, just keep spamming ESCAPE until you reach the
+# last prompt where you're asked to confirm or deny.
+
+### Known promlems:
+### * If using this script with 'shift' as part of the hotkey the shift key
+### gets stuck if you let go of it while xdotool is doing its thing.
+### Can be solved by not using the shift key in the hotkey.
+### * Can't figure out why xdotool fails sometimes. Fixed by sleeping a bit.
+### * When you try to open a bookmark the list shows an extra line at the start
+### saying "waiting for input" when the script is run with a hotkey (sxhkd).
+### Can't figure out why.
+
+### Should check if the yanked URL is in buku already before continuing.
+### Though it'll simply give an error even if you try to add it.
+
+# Set menu options:
+MenuOpen="1. Open a bookmark."
+MenuSave="2. Create new bookmark."
+
+ChosenMenu="$(printf "%s\n%s" \
+	"$MenuOpen" "$MenuSave" \
+	| dmenu -i -l 10 -p "dbuku:")"
+
+# Open bookmark:
+if [ "$ChosenMenu" = "$MenuOpen" ]; then
+	buku -p -f 5 \
+		| awk -F "\t" '{print $1, "-", $2, "#(" $3 ")"}' \
+		| dmenu -i -l 30 \
+		| awk '{print $1}' \
+		| xargs --no-run-if-empty buku -o
+
+# Create bookmark:
+elif [ "$ChosenMenu" = "$MenuSave" ]; then
+	# Get the name of the active window:
+	ActiveWindow="$(ps -p "$(xdotool getwindowfocus getwindowpid)" -o comm=)"
+
+	# Set the name if the active window is a chromium based browser:
+	printf "%s" "$ActiveWindow" | grep -Eq "chromium|chrome|brave" \
+		&& ActiveWindow="chromium-based"
+	### Haven't actually checked whether Chromium's window name is chromium.
+
+	# Get URL/title based on browser:
+	if [ "$ActiveWindow" = "qutebrowser" ]; then
+		xdotool search --name qutebrowser key --clearmodifiers y P
+		sleep 0.1
+		URL="$(xclip -o)"
+		sleep 0.1
+		xdotool search --name qutebrowser key --clearmodifiers y T
+		sleep 0.1
+		Title="$(xclip -o)"
+	elif [ "$ActiveWindow" = "chromium-based" ]; then
+		xdotool key --clearmodifiers ctrl+l
+		sleep 0.1
+		xdotool key --clearmodifiers ctrl+c
+		sleep 0.1
+		URL="$(xclip -o)"
+		sleep 0.1
+		### Maybe write it to a file in the background to speed it up.
+		### Doesn't work for some generated sites.
+		Title="$(curl -s "$URL" \
+			| awk -F "<title>|</title>" '{for(i=2;i<=NF;i+=2){print $i}}' \
+			RS="" \
+			| recode html)"
+	fi
+
+	# Prompt user to edit the URL:
+	EditedURL="$(printf "%s" "$URL" | dmenu -l 1 -p "Edit URL:")"
+	[ "$EditedURL" ] && URL="$EditedURL"
+
+	# Prompt user to edit the title:
+	EditedTitle="$(printf "%s" "$Title" | dmenu -l 1 -p "Edit title:")"
+	[ "$EditedTitle" ] && Title="$EditedTitle"
+
+	# Prompt the user to pick tags for the bookmark:
+	BukuTags="$(buku -t)"
+	BukuTags="$(printf "%s" "$BukuTags" \
+		| grep '[0-9]\..' \
+		| awk '{print $2}')"
+		# awk is POSIX, but means you need to avoid spaces in tags.
+		#| grep -oP '(?<=[0-9]\.\s).+(?=\s\([0-9])')
+		# grep -oP is non-POSIX, but allows for spaces in tags.
+	while true; do
+		SelectedTag="$(printf "%s" "$BukuTags" \
+			| dmenu -i -l 30 \
+			-p "Add tags. SHIFT+ENTER to create a new tag. $Tags")"
+		[ -z "$SelectedTag" ] && break
+		Tags="$Tags$SelectedTag,"
+	done
+	Tags="$(printf "%s" "${Tags%?}")"
+
+	# Prompt the user to add a comment/description:
+	Comment="$(printf "" | dmenu -p "Input comment:")"
+
+	# Prompt the user whether they want the title and description to not update:
+	Immutability="$(printf "No\nYes" | dmenu -i -p "Enable immutability?")"
+	[ "$Immutability" = "Yes" ] && Immutable="--immutable 1"
+	[ "$Immutability" = "No" ] && Immutable=""
+
+	# Create a preview for the user to see their input:
+	Lock=""
+	[ "$Immutability" = "Yes" ] && Lock="(L)"
+	Confirmation="$(printf "%s\nIDN. %s %s\n   > %s\n   + %s\n   # %s" \
+		"This is a preview. Press ENTER to confirm or ESCAPE to cancel." \
+		"$Title" "$Lock" "$URL" "$Comment" "$Tags" \
+		| dmenu -i -l 5)"
+
+	# If the user pressed ENTER, create the bookmark:
+	[ "$Confirmation" ] && \
+		buku $(printf "%s %s %s --title %s -c %s %s" \
+		"-a" "$URL" "$Tags" "$Title" "$Comment" "$Immutable")
+elif [ -z "$ChosenMenu" ]; then
+	exit 1
+else
+	printf "ERROR: invalid selection.\n"
+	exit 1
+fi
