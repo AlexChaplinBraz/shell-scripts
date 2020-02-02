@@ -55,6 +55,21 @@ a program selected from a list of programs in that directory. Convoluted
 description. Read '--help'. Can also take a file that contains bookmarks of
 the parent directories you wish to start finding subdirectories from.
 
+### dlocate
+
+Same principle as ddiropen but using locate. Instead of using a bookmark file
+or giving it a directory, it asks you what to search for and you select one of
+the results.
+
+It has the advantage of being able to open files as well as
+directories, it's relatively faster and can give you results from all around
+your system.
+
+The disadvantages are that you need to keep the database updating frequently
+for this script to be useful (even then, files you created recently won't
+appear until the update) and the results can feel random at times if you
+search for something that appears in many places.
+
 ### dbuku
 
 Open a buku bookmark with your $BROWSER or create a buku bookmark with a
@@ -94,6 +109,12 @@ Makes starting new scripts really painless.
 
 Choose which wine bottle to open a program with. Mostly used in my own
 xdg-open script for .exe files.
+
+### dkeys
+
+Dmenu for enabling and disabling keys. Currently works for Super_L and Super_R.
+And will probably not work for other keyboards. I just needed a way to disable
+the super keys quickly. Might make it more general-purpose later.
 
 ## Legal
 
