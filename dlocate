@@ -1,0 +1,96 @@
+#!/usr/bin/env sh
+
+# Dmenu for locating and opening paths.
+
+ScriptName="$(basename $0)"
+Version=1.0.0
+
+# MIT License
+#
+# Copyright (c) 2020 Alexander Chaplin Braz (http://alexchaplinbraz.com)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Compose the help message:
+HelpMessage="$ScriptName - Version: $Version
+Creator: Alexander Chaplin Braz (http://alexchaplinbraz.com)
+License: MIT
+
+Usage: $ScriptName {'programs'}
+
+Quickly find files and directories using 'locate', select one of the results
+and then select a program to open that path with.
+
+This script requires one argument of comma separated programs, which can be
+unquoted, but quoting it gives the user the ability to specify options
+for the programs.
+
+As it depends on 'locate', the database needs to be updated frequently for
+this script to be useful. It's recommended to have a cron job running
+'updatedb' every 15 or 30 minutes.
+
+At the program selection point it's also possible to simply write a
+non-specified program with arguments. If one of the dmenu options is still
+selected, SHIFT+ENTER will ignore it and select exactly what you typed.
+
+Examples:
+	$ScriptName vim,vifm,lf,sxiv
+	$ScriptName 'nvim,lf,vifm,sxiv -ta,sxiv -arf'
+"
+
+# Notify user of how to use the script:
+[ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ] && \
+	printf "%s" "$HelpMessage" && \
+	exit 1
+
+# Prompt user what to locate:
+LocateTarget="$(printf "" \
+	| dmenu -p "dlocate:")"
+
+# Exit if nothing was selected:
+[ -z "$LocateTarget" ] && exit 1
+
+# Do the search:
+Located="$(locate "$LocateTarget")"
+
+# Prompt user to select one of the results:
+Path="$(printf "%s" "$Located" \
+	| dmenu -i -l 30 -p "Select path:")"
+
+# Exit if nothing was selected:
+[ -z "$Path" ] && exit 1
+
+# Parse the passed programs:
+Parsed="$(printf "%s" "$1" | tr -s ',' '\n')"
+
+# If there's only one program, skip selecting it:
+if [ $(printf "%s\n" "$Parsed" | wc -l) = 1 ]; then
+	Program="$Parsed"
+
+# Else, choose one:
+else
+	Program="$(printf "%s" "$Parsed" \
+		| dmenu -i -l 10 -p "Select program:")"
+fi
+
+# Exit if nothing was selected:
+[ -z "$Program" ] && exit 1
+
+# Launch the selected program with the selected path:
+eval "$Program" \""$Path"\"
