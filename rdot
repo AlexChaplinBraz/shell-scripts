@@ -18,6 +18,7 @@ rsync -avR \
 	"$HOME/./.config/polybar/launch" \
 	"$HOME/./.config/sxhkd/sxhkdrc" \
 	"$HOME/./.config/zathura/zathurarc" \
+	"$HOME/./.config/zsh/.zkbd/st-256color-pc-linux-gnu" \
 	"$HOME/./.config/zsh/.zshrc" \
 	"$HOME/./.config/aliasrc" \
 	"$HOME/./.config/envvars" \
