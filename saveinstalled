@@ -2,7 +2,7 @@
 
 # Save lists of installed programs.
 
-find $HOME/src -maxdepth 1 -type d -exec basename {} \; \
+find $HOME/.local/src -maxdepth 1 -type d -exec basename {} \; \
 	> "$LSHARE/installed_packages/source"
 printf "Saved list of programs installed from source.\n"
 
