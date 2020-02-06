@@ -62,7 +62,7 @@ but it also gives you the abiliry to edit or delete a bookmark.
 Select a browser to open a URL with. Can be exported to $BROWSER and be used
 with dmarks for more control over what browser and profile to open.
 This script holds my personal browsers and profiles, so you'll have to
-modify it for it to be useful for you.
+modify it for it to be useful for you. Can also just be used to launch browsers.
 
 ### ddiropen
 
