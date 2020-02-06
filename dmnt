@@ -43,7 +43,7 @@ if [ "$ChosenMenu" = "$MenuMount" ]; then
 
 # Unmount a partition:
 elif [ "$ChosenMenu" = "$MenuUnmount" ]; then
-	ExclusionRegex="\(/boot\|/home\|/\|/backup\)$"
+	ExclusionRegex="\(/boot\|/home\|/\|/backup\|/backup/extra\)$"
 
 	Drives="$(lsblk -lp \
 		| grep "part /" \
