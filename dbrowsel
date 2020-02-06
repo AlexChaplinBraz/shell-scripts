@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+
+# Dmenu for selecting which browser to open a URL with.
+
+Browsers="Brave
+qutebrowser
+chrome
+B-Brave
+A-Brave
+C-Brave
+R-Brave
+B-Chrome
+A-Chrome
+R-Chrome"
+
+Chosen="$(printf "%s" "$Browsers" \
+	| dmenu -i -l 20 -p "Select browser to open URL:")"
+[ -z "$Chosen" ] && exit 1
+
+case "$Chosen" in
+	Brave) brave "$1";;
+	qutebrowser) qutebrowser "$1";;
+	Chrome) google-chrome-stable "$1";;
+	B-Brave) brave --profile-directory="Profile 1" "$1";;
+	A-Brave) brave --profile-directory=Default "$1";;
+	C-Brave) brave --profile-directory="Profile 3" "$1";;
+	R-Brave) brave --profile-directory="Profile 2" "$1";;
+	B-Chrome) google-chrome-stable --profile-directory=Default "$1";;
+	A-Chrome) google-chrome-stable --profile-directory="Profile 2" "$1";;
+	R-Chrome) google-chrome-stable --profile-directory="Profile 1" "$1";;
+	*) eval "$Chosen" "$1";;
+esac
