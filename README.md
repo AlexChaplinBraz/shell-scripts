@@ -45,8 +45,24 @@ to set your own folders.
 ### dpass
 
 Copy, add, edit and delete pass entries through a series of dmenu prompts.
-It requires genrepass to generate passwords and an already
+It requires [genrepass](https://github.com/AlexChaplinBraz/genrepass)
+to generate passwords and an already
 initiated password store. Git support is planned.
+
+### dmarks
+
+A simple plain text URL bookmark manager. Copy, add, edit and delete bookmark
+entries through a series of dmenu prompts (I like this type of interaction).
+Based on dbuku but is even better. It can also get the URL and title of the
+active window if it is one of: qutebrowser, Chrome, Brave or Chromium,
+but it also gives you the abiliry to edit or delete a bookmark.
+
+### dbrowsel
+
+Select a browser to open a URL with. Can be exported to $BROWSER and be used
+with dmarks for more control over what browser and profile to open.
+This script holds my personal browsers and profiles, so you'll have to
+modify it for it to be useful for you.
 
 ### ddiropen
 
@@ -75,10 +91,11 @@ search for something that appears in many places.
 Open a buku bookmark with your $BROWSER or create a buku bookmark with a
 series of interactive dmenu prompts. It has support for getting the URL
 and title of the active window if it is one of: qutebrowser, Chrome, Brave
-and Chromium (though I haven't tested Chromium because I don't have it).
+or Chromium (though I haven't tested Chromium because I don't have it).
 
-It works fine, but I dislike buku's way of operating so I'm creating my own
+It works fine, but I dislike buku's way of operating so I created my own
 plain text bookmarking system with dmenu for managing them.
+No more development is planned for it since I switched to dmarks.
 
 ### demoji
 
