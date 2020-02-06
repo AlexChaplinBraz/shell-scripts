@@ -7,11 +7,11 @@ Chosen="$(printf "WG32\nWG64" \
 
 if [ "$Chosen" = "WG32" ]; then
 	export WINEARCH=win32
-	export WINEPREFIX=/home/alex/wine/wg32
+	export WINEPREFIX=/home/alex/.local/wine/wg32
 	exec wine "$1"
 elif [ "$Chosen" = "WG64" ]; then
 	export WINEARCH=win64
-	export WINEPREFIX=/home/alex/wine/wg64
+	export WINEPREFIX=/home/alex/.local/wine/wg64
 	exec wine "$1"
 else
 	exit 1
