@@ -14,7 +14,7 @@ A-Chrome
 R-Chrome"
 
 Chosen="$(printf "%s" "$Browsers" \
-	| dmenu -i -l 20 -p "Select browser to open URL:")"
+	| dmenu -i -l 20 -p "Select browser:")"
 [ -z "$Chosen" ] && exit 1
 
 case "$Chosen" in
