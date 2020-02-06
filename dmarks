@@ -1,0 +1,242 @@
+#!/usr/bin/env sh
+
+# Dmenu plain text URL bookmark manager.
+
+# MIT License
+#
+# Copyright (c) 2020 Alexander Chaplin Braz (http://alexchaplinbraz.com)
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+ScriptName="$(basename $0)"
+Version=1.0.0
+
+# Compose the help message:
+HelpMessage="$ScriptName - Version: $Version
+Creator: Alexander Chaplin Braz (http://alexchaplinbraz.com)
+License: MIT
+
+Usage: $ScriptName {bookmark}
+
+This script is a simple plain text URL bookmark manager that lets the user
+copy, add, edit and delete bookmark entries. It requires one argument,
+the path to the bookmark file. The URLs are opened with \$BROWSER.
+
+The format of the bookmark file is:
+One bookmark per line with three tab separated fields: URL, title and tags.
+The tags are comma separated and can have spaces.
+"
+
+# Notify user of how to use the script:
+[ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ] && \
+	printf "%s" "$HelpMessage" && \
+	exit 1
+
+# Print version and exit:
+[ "$1" = "-v" ] || [ "$1" = "--version" ] && \
+	printf "%s - Version: %s\n" "$ScriptName" "$Version" && \
+	exit 1
+
+# Temporary file location
+TempFile="/tmp/$ScriptName"
+
+# Load and format the bookmarks:
+Bookmarks="$(cat "$1" | nl -n ln)"
+FormattedBookmarks="$(printf "%s" "$Bookmarks" \
+	| sed 's/\t\t/\tBLANK\t/' \
+	| awk -F '\t' '{print $1, $3, "("$4")", $5, "["$2"]"}')"
+	### For some reason setting OFS='\t' makes dmenu lag.
+
+# Set menu options:
+MenuOpen="1. Open a bookmark."
+MenuCreate="2. Create new bookmark."
+MenuEdit="3. Edit a bookmark."
+MenuDelete="4. Delete a bookmark."
+
+# Prompt user to choose action:
+ChosenMenu="$(printf "%s\n%s\n%s\n%s" \
+	"$MenuOpen" "$MenuCreate" "$MenuEdit" "$MenuDelete" \
+	| dmenu -i -l 10 -p "$ScriptName:")"
+
+# Open bookmark:
+if [ "$ChosenMenu" = "$MenuOpen" ]; then
+	# Prompt user for bookmark:
+	Chosen=$(printf "%s" "$FormattedBookmarks" \
+		| dmenu -i -l 30 -p "Open:" \
+		| awk '{printf $1}')
+	Chosen="$(printf "%s" "$Bookmarks" \
+		| grep -w ^$Chosen \
+		| awk '{printf $2}')"
+	[ -z "$Chosen" ] && exit 1
+
+	# Open browser with selected URL.
+	$BROWSER "$Chosen"
+
+# Create bookmark:
+elif [ "$ChosenMenu" = "$MenuCreate" ]; then
+	# Get the name of the active window:
+	ActiveWindow="$(ps -p "$(xdotool getwindowfocus getwindowpid)" -o comm=)"
+
+	# Set the name if the active window is a chromium based browser:
+	printf "%s" "$ActiveWindow" | grep -Eq "chromium|chrome|brave" \
+		&& ActiveWindow="chromium-based"
+	### Haven't actually checked whether Chromium's window name is chromium.
+
+	# Get URL/title based on browser:
+	if [ "$ActiveWindow" = "qutebrowser" ]; then
+		xdotool search --name qutebrowser key --clearmodifiers y P
+		sleep 0.1
+		URL="$(xclip -o)"
+		sleep 0.1
+		xdotool search --name qutebrowser key --clearmodifiers y T
+		sleep 0.1
+		Title="$(xclip -o)"
+	elif [ "$ActiveWindow" = "chromium-based" ]; then
+		xdotool key --clearmodifiers ctrl+l
+		sleep 0.1
+		xdotool key --clearmodifiers ctrl+c
+		sleep 0.1
+		URL="$(xclip -o)"
+		sleep 0.1
+		### Maybe write it to a file in the background to speed it up.
+		### Doesn't work for some generated sites.
+		Title="$(curl -s "$URL" \
+			| awk -F "<title>|</title>" '{for(i=2;i<=NF;i+=2){print $i}}' \
+			RS="" \
+			| recode html)"
+	fi
+
+	# Check if URL already exists.
+	if [ "$URL" ] && grep -q "$URL" "$1" ;then
+		printf "" | dmenu -p "ERROR: URL already bookmarked."
+		exit 1
+	fi
+
+	# Prompt user to edit the URL:
+	EditedURL="$(printf "%s" "$URL" | dmenu -l 1 -p "Edit URL:")"
+	[ "$EditedURL" ] && URL="$EditedURL"
+
+	# Prompt user to edit the title:
+	EditedTitle="$(printf "%s" "$Title" | dmenu -l 1 -p "Edit title:")"
+	[ "$EditedTitle" ] && Title="$EditedTitle"
+
+	# Prompt the user to pick tags for the bookmark:
+	AllTags="$(printf "%s" "$Bookmarks" \
+		| awk -F '\t' '{print $4}' \
+		| tr ',' '\n' \
+		| sort \
+		| uniq)"
+	while true; do
+		SelectedTag="$(printf "%s" "$AllTags" \
+			| dmenu -i -l 30 \
+			-p "Add tags. SHIFT+ENTER to create a new tag. $Tags")"
+		[ -z "$SelectedTag" ] && break
+		Tags="$Tags$SelectedTag,"
+	done
+	Tags="${Tags%?}"
+
+	# Create a preview for the user to see their input:
+	Confirmation="$(printf "%s\nURL: %s\nTitle: %s\nTags: %s" \
+		"This is a preview. Press ENTER to confirm or ESCAPE to cancel." \
+		"$URL" "$Title" "$Tags" \
+		| dmenu -i -l 10)"
+
+	# If the user pressed ENTER, create the bookmark:
+	[ "$Confirmation" ] && \
+		printf "%s\t%s\t%s" \
+		"$URL" "$Title" "$Tags" >> "$1"
+
+# Edit bookmark:
+elif [ "$ChosenMenu" = "$MenuEdit" ]; then
+	# Prompt user for bookmark:
+	Chosen=$(printf "%s" "$FormattedBookmarks" \
+		| dmenu -i -l 30 -p "Edit:" \
+		| awk '{printf $1}')
+	Chosen="$(printf "%s" "$Bookmarks" \
+		| grep -w ^$Chosen \
+		| awk '{printf $2}')"
+	[ -z "$Chosen" ] && exit 1
+
+	# Get the bookmark information:
+	Mark="$(grep "$Chosen" "$1")"
+	OldURL="$(printf "%s" "$Mark" | awk -F '\t' '{printf $1}')"
+	OldTitle="$(printf "%s" "$Mark" | awk -F '\t' '{printf $2}')"
+	OldTags="$(printf "%s" "$Mark" | awk -F '\t' '{printf $3}')"
+
+	# Prompt user to edit the URL:
+	EditedURL="$(printf "%s" "$OldURL" | dmenu -l 1 -p "Edit URL:")"
+	[ "$EditedURL" ] && URL="$EditedURL"
+
+	# Prompt user to edit the title:
+	EditedTitle="$(printf "%s" "$OldTitle" | dmenu -l 1 -p "Edit title:")"
+	[ "$EditedTitle" ] && Title="$EditedTitle"
+
+	# Prompt the user to pick tags for the bookmark:
+	AllTags="$(printf "%s" "$Bookmarks" \
+		| awk -F '\t' '{print $4}' \
+		| tr ',' '\n' \
+		| sort \
+		| uniq)"
+	while true; do
+		SelectedTag="$(printf "%s" "$AllTags" \
+			| dmenu -i -l 30 \
+			-p "Old: $OldTags | New: $Tags")"
+		[ -z "$SelectedTag" ] && break
+		Tags="$Tags$SelectedTag,"
+	done
+	Tags="${Tags%?}"
+
+	# Create a preview for the user to see their input:
+	Confirmation="$(printf \
+		"%s\nNew URL: %s\nOld URL: %s\nNew title: %s\nOld title: %s\
+		\nNew tags: %s\nOld tags: %s" \
+		"This is a preview. Press ENTER to confirm or ESCAPE to cancel." \
+		"$URL" "$OldURL" "$Title" "$OldTitle" "$Tags" "$OldTags" \
+		| dmenu -i -l 10)"
+
+	# If the user pressed ENTER, edit the bookmark:
+	if [ "$Confirmation" ]; then
+		sed "\|$Chosen|d" "$1" > "$TempFile"
+		mv "$TempFile" "$1"
+		printf "%s\t%s\t%s" "$URL" "$Title" "$Tags" >> "$1"
+	else
+		exit 1
+	fi
+
+# Delete bookmark:
+elif [ "$ChosenMenu" = "$MenuDelete" ]; then
+	# Prompt user for bookmark:
+	Chosen=$(printf "%s" "$FormattedBookmarks" \
+		| dmenu -i -l 30 -p "Delete:" \
+		| awk '{printf $1}')
+	Chosen="$(printf "%s" "$Bookmarks" \
+		| grep -w ^$Chosen \
+		| awk '{printf $2}')"
+	[ -z "$Chosen" ] && exit 1
+
+	# Delete selected bookmark from file:
+	sed "\|$Chosen|d" "$1" > "$TempFile"
+	mv "$TempFile" "$1"
+
+elif [ -z "$ChosenMenu" ]; then
+	exit 1
+else
+	printf "ERROR: invalid selection.\n"
+	exit 1
+fi
