@@ -24,7 +24,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-ScriptName="$(basename $0)"
+ScriptName="${0##*/}"
 Version=1.0.0
 
 # Compose the help message:

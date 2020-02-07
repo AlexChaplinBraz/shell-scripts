@@ -28,7 +28,7 @@
 	printf "ERROR: 'genrepass' is required for password generation.\n" && \
 	exit 1
 
-ScriptName="$(basename $0)"
+ScriptName="${0##*/}"
 Version=1.0.0
 
 suggest_help() {

@@ -2,7 +2,7 @@
 
 # Dmenu for locating and opening paths.
 
-ScriptName="$(basename $0)"
+ScriptName="${0##*/}"
 Version=1.0.0
 
 # MIT License

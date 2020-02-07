@@ -27,7 +27,7 @@
 # Set default bookmark if there is none:
 BlankMark="---"
 
-ScriptName="$(basename $0)"
+ScriptName="${0##*/}"
 Version=1.0.0
 
 # Compose the help message:
@@ -151,7 +151,7 @@ if [ $ProgramAmount = 1 ]; then
 	Program="$Parsed"
 # Else, select the program first to hide the time taken to find the directories:
 else
-	Program="$(printf "$Parsed" \
+	Program="$(printf "%s" "$Parsed" \
 		| dmenu -i -l 30 -p "Select program:")"
 	[ -z "$Program" ] && exit 1
 fi
