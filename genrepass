@@ -55,12 +55,10 @@ ForceUpper=
 ForceLower=
 UnForceUpper=
 UnForceLower=
-UpperChars="ABCDEFGHIJKMLNOPQRSTUVWXYZ"
-LowerChars="abcdefghijklmnopqrstuvwxyz"
 ResetCounter=0
-Version=1.0.0
+Version=1.0.1
 Password=""
-ScriptName="$(basename "$0")"
+ScriptName="${0##*/}"
 
 suggest_help() {
 	printf "Try '%s --help' for more information.\n" "$ScriptName"
@@ -273,10 +271,10 @@ if [ $UseSource ] && [ "$FilePath" ]; then
 	suggest_help
 	exit 1
 elif [ $UseSource ]; then
-	Text=$(cat "$0")
+	Text="$(cat "$0")"
 elif [ "$FilePath" ]; then
-	Text=$(cat "$FilePath")
-	[ ! "$Text" ] && exit 1
+	Text="$(cat "$FilePath")"
+	[ -z "$Text" ] && printf "ERROR: File is empty." && exit 1
 else
 	printf "ERROR: No file was provided.\n"
 	suggest_help
@@ -338,8 +336,7 @@ while true ; do
 		[ $Debug ] && printf "%s\n" "$Password"
 	fi
 	[ $ResetCounter -ge $MaxResets ] && \
-		Password=$(printf "%s" "$Password" \
-		| cut -c1-$MaxPassLen)
+		Password="$(expr substr "$Password" 1 $MaxPassLen)"
 	[ ${#Password} -gt $MaxPassLen ] && Password=""
 	[ -z "$Password" ] && ResetCounter=$((ResetCounter + 1))
 	[ ${#Password} -ge $MinPassLen ] && break
@@ -349,8 +346,7 @@ done
 
 [ $Debug ] && \
 	printf "\n%s <-- Character Count: %s\n" \
-	"$Password" \
-	$(printf "%s" "$Password" | wc -m)
+	"$Password" ${#Password}
 
 # Generate random, non-repeated positions so that the same characters
 # aren't replaced more than once:
@@ -362,62 +358,91 @@ if [ $Replace ]; then
 	[ $Debug ] && printf "\n%s\n" "$Positions"
 fi
 
-# Add special characters to the password:
-index=0
-while [ $index -lt $SpeCharsAmount ]; do
-	if [ $Replace ]; then
-		char=$(printf "%s" "$SpeChars" \
-			| cut -c"$(shuf -i 1-${#SpeChars} -n1)")
-		pos=$(printf "%s" "$Positions" \
-			| grep -w ^$((index + 1)) \
-			| awk '{printf $2}')
-		[ $Debug ] && printf "%s at %s  " "$char" $pos
-		Password=$(printf "%s" "$Password" \
-			| sed s/./"$char"/$pos)
-	else
-		char=$(printf "%s" "$SpeChars" \
-			| cut -c"$(shuf -i 1-${#SpeChars} -n1)")
-		pos=$(shuf -i 1-${#Password} -n1)
-		[ $Debug ] && printf "%s at %s  " "$char" $pos
-		Password=$(printf "%s" "$Password" \
-			| sed s/./"$char"\&/$pos)
+# Function for adding characters:
+add_char() {
+	if [ "$1" = "special" ]; then
+		charAmount=$SpeCharsAmount
+		getChar='expr substr "$SpeChars" $(shuf -i 1-${#SpeChars} -n1) 1'
+		grepArg='^$((index + 1))'
+	elif [ "$1" = "number" ]; then
+		charAmount=$NumAmount
+		getChar='shuf -i 0-9 -n1'
+		grepArg='^$((index + 1 + SpeCharsAmount))'
 	fi
-	index=$((index + 1))
-done
+
+	index=0
+	while [ $index -lt $charAmount ]; do
+		char="$(eval "$getChar")"
+		if [ $Replace ]; then
+			pos=$(printf "%s" "$Positions" \
+				| grep -w $grepArgs \
+				| awk '{printf $2}')
+			[ $Debug ] && printf "%s at %s  " "$char" $pos
+			Password=$(printf "%s" "$Password" \
+				| sed s/./"$char"/$pos)
+		else
+			pos=$(shuf -i 1-${#Password} -n1)
+			[ $Debug ] && printf "%s at %s  " "$char" $pos
+			Password=$(printf "%s" "$Password" \
+				| sed s/./"$char"\&/$pos)
+		fi
+		index=$((index + 1))
+	done
+}
+
+# Add special characters to the password:
+add_char special
 
 [ $Debug ] && \
 	printf "\n%s <-- Character Count: %s\n" \
-	"$Password" \
-	$(printf "%s" "$Password" | wc -m)
+	"$Password" ${#Password}
 
 # Add numbers to the password:
-index=0
-while [ $index -lt $NumAmount ]; do
-	if [ $Replace ]; then
-		char=$(shuf -i 0-9 -n1)
-		pos=$(printf "%s" "$Positions" \
-			| grep -w ^$((index + 1 + SpeCharsAmount)) \
-			| awk '{printf $2}')
-		[ $Debug ] && printf "%s at %s  " "$char" $pos
-		Password=$(printf "%s" "$Password" \
-			| sed s/./"$char"/$pos)
-	else
-		char=$(shuf -i 0-9 -n1)
-		pos=$(shuf -i 1-${#Password} -n1)
-		[ $Debug ] && printf "%s at %s  " "$char" $pos
-		Password=$(printf "%s" "$Password" \
-			| sed s/./"$char"\&/$pos)
-	fi
-	index=$((index + 1))
-done
+add_char number
 
 [ $Debug ] && \
 	printf "\n%s <-- Character Count: %s\n" \
-	"$Password" \
-	$(printf "%s" "$Password" | wc -m)
+	"$Password" ${#Password}
+
+# Function for changing capitalization:
+change_case_to() {
+	if [ "$1" = "upper" ]; then
+		forceState=$ForceUpper
+		caseAmount=$UpperAmount
+		grepClass='[[:lower:]]'
+		trString1='[:lower:]'
+		trString2='[:upper:]'
+		toCase="Upper"
+	elif [ "$1" = "lower" ]; then
+		forceState=$ForceLower
+		caseAmount=$LowerAmount
+		grepClass='[[:upper:]]'
+		trString1='[:upper:]'
+		trString2='[:lower:]'
+		toCase="Lower"
+	fi
+
+	index=1
+	while [ $forceState ] && [ $index -le $caseAmount ]; do
+		pos=$(shuf -i 1-${#Password} -n1)
+		char="$(expr substr "$Password" $pos 1)"
+		[ $Debug ] && printf "\n%s at %s" "$char" $pos
+		if printf "%s" "$char" | grep -q "$grepClass"; then
+			char="$(printf "%s" "$char" | tr "$trString1" "$trString2")"
+			[ $Debug ] && printf "\n%s at %s <-- To %s" "$char" $pos "$toCase"
+			Password="$(printf "%s" "$Password" \
+				| sed s/./"$char"/$pos)"
+			[ $Debug ] && printf "\n%s" "$Password"
+			index=$((index + 1))
+		elif ! printf "%s" "$Password" | grep -q "$grepClass"; then
+			[ $Debug ] && printf "\nAll characters are uppercase\n"
+			break
+		fi
+	done
+}
 
 # Calculate the amount of uppercase letters:
-UpperCount=$(printf "%s" "$Password" | tr -cd "$UpperChars" | wc -m)
+UpperCount=$(printf "%s" "$Password" | tr -cd "[:upper:]" | wc -m)
 [ $Debug ] && printf "\nUpper Count: %s" $UpperCount
 
 # Force capitalization when there are no uppercase letters:
@@ -425,26 +450,10 @@ UpperCount=$(printf "%s" "$Password" | tr -cd "$UpperChars" | wc -m)
 [ $Debug ] && printf "\nForce Upper: %s" $ForceUpper
 
 # Capitalize a number of letters:
-index=1
-while [ $ForceUpper ] && [ $index -le $UpperAmount ]; do
-	char=$(expr substr "$Password" $pos 1)
-	pos=$(shuf -i 1-${#Password} -n1)
-	[ $Debug ] && printf "\n%s at %s" "$char" $pos
-	if printf "%s" "$char" | grep -q "[a-z]"; then
-		char=$(printf "%s" "$char" | tr '[:lower:]' '[:upper:]')
-		[ $Debug ] && printf "\n%s at %s <-- To Upper" "$char" $pos
-		Password=$(printf "%s" "$Password" \
-			| sed s/./"$char"/$pos)
-		[ $Debug ] && printf "\n%s" "$Password"
-		index=$((index + 1))
-	elif ! printf "%s" "$Password" | grep -q "[a-z]"; then
-		[ $Debug ] && printf "\nAll characters are uppercase\n"
-		break
-	fi
-done
+change_case_to upper
 
 # Calculate the amount of lowercase letters:
-LowerCount=$(printf "%s" "$Password" | tr -cd "$LowerChars" | wc -m)
+LowerCount=$(printf "%s" "$Password" | tr -cd "[:lower:]" | wc -m)
 [ $Debug ] && printf "\nLower Count: %s" $LowerCount
 
 # Force decapitalization when there are no lowercase letters:
@@ -452,23 +461,7 @@ LowerCount=$(printf "%s" "$Password" | tr -cd "$LowerChars" | wc -m)
 [ $Debug ] && printf "\nForce Lower: %s" $ForceLower
 
 # Decapitalize a number of letters:
-index=1
-while [ $ForceLower ] && [ $index -le $LowerAmount ]; do
-	char=$(expr substr "$Password" $pos 1)
-	pos=$(shuf -i 1-${#Password} -n1)
-	[ $Debug ] && printf "\n%s at %s" "$char" $pos
-	if printf "%s" "$char" | grep -q "[A-Z]"; then
-		char=$(printf "%s" "$char" | tr '[:upper:]' '[:lower:]')
-		[ $Debug ] && printf "\n%s at %s <-- To Lower" "$char" $pos
-		Password=$(printf "%s" "$Password" \
-			| sed s/./"$char"/$pos)
-		[ $Debug ] && printf "\n%s" "$Password"
-		index=$((index + 1))
-	elif ! printf "%s" "$Password" | grep -q "[A-Z]"; then
-		[ $Debug ] && printf "\nAll characters are lowercase\n"
-		break
-	fi
-done
+change_case_to lower
 
 [ $Debug ] && printf "\n\nResulting Password:\n%s\n" "$Password"
 
