@@ -31,7 +31,7 @@ Just download genrepass, put it in your $PATH, and make it executable.
 
 ## Usage
 
-`genrepass [opts] {-f <path> | --file <path> | -s | --use-source} [opts]`
+`genrepass [opts] {filepath} [opts]`
 
 ## Examples
 
@@ -42,12 +42,13 @@ Use the script's own source code, capitalize every word and copy to clipboard:
 Use the file "Journal-2020.md", translate all accented characters, capitalize
 every word and copy to clipboard:
 
-`genrepass -tCcf "$HOME/Documents/Journal-2020.md"`
+`genrepass -tCc "$HOME/Documents/Journal-2020.md"`
 
 Use the script's own source code, containing 10 special characters and
-with a length between 30 and 50 characters:
+with a length between 30 and 40 characters (two versions):
 
-`genrepass -s --min-pass-len 30 --max-pass-len 50 --spechars-amount 10`
+`genrepass -s --min-pass-len 30 --max-pass-len 40 --spechars-amount 10`
+`genrepass -s -l 30 -L 40 -P 10`
 
 ## Options
 
@@ -70,10 +71,6 @@ for your real passwords.
 
 `-s | --use-source`
 
-Specify a file to use for password generation.
-
-`-f <path> | --file <path>`
-
 Copy the password to clipboard using xclip.
 
 `-c | --clipboard`
@@ -94,64 +91,64 @@ from being parsed out. Only works for UTF-8 encoded files.
 Maximum amount of resets before the password is trimmed to the maximum
 password length. Default: 5
 
-`-A | --max-resets <num>`
+`-R | --max-resets <num>`
 
 Minimum password length. Default: 24
 
-`-B | --min-pass-len <num>`
+`-l | --min-pass-len <num>`
 
 Maximum password length. Default: 30
 
-`-N | --max-pass-len <num>`
+`-L | --max-pass-len <num>`
 
 Amount of numbers to insert. Default: 2
 
-`-D | --num-amount <num>`
+`-N | --num-amount <num>`
 
 Amount of special characters to insert. Default: 2
 
-`-E | --spechars-amount <num>`
+`-P | --spechars-amount <num>`
 
 List of special characters to insert. Avoid using '&' and '$' due to them
 messing up the script and $ being interpreted as a variable in the shell.
 Default: #%!@+-_=
 
-`-F | --spechars <chars>`
+`-S | --spechars <chars>`
 
 Amount of letters to be capitalized. Default: 3
 
-`-G | --upper-amount <num>`
+`-A | --upper-amount <num>`
 
 Amount of letters to be decapitalized. Default: 3
 
-`-H | --lower-amount <num>`
+`-a | --lower-amount <num>`
 
 Force the password to have a number of uppercase letters,
 based on '--upper-amount'. Gets automatically turned on if there
 are no uppercase letters at all.
 
-`-I | --force-upper`
+`-F | --force-upper`
 
 Force the password to have a number of lowercase letters,
 based on '--lower-amount'. Gets automatically turned on if
 there are no lowercase letters at all.
 
-`-J | --force-lower`
+`-f | --force-lower`
 
 Instead of getting a password with a random length in a certain range,
 specify it. This option overrides '--min-pass-len' and '--max-pass-len'.
 
-`-K | --fixed-pass-len <num>`
+`-x | --fixed-pass-len <num>`
 
 Prevent the automatic capitalization when there are no uppercase letters.
 Gets ignored if '--force-upper' is set.
 
-`-L | --unforce-upper`
+`-U | --unforce-upper`
 
 Prevent the automatic decapitalization when there are no lowercase letters.
 Gets ignored if '--force-lower' is set.
 
-`-M | --unforce-lower`
+`-u | --unforce-lower`
 
 ## Legal
 
