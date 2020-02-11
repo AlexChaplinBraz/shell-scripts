@@ -183,7 +183,7 @@ check_arg() {
 # Parse parameters:
 while [ "$#" -gt 0 ]; do
 	case $1 in
-		-[A-Za-z][A-Za-z]*|-[A-Za-z][0-9]*)
+		-[[:alpha:]][[:alpha:]]*|-[[:alpha:]][[:digit:]]*)
 			opts=$(printf "%s" "$1" \
 				| sed 's/-//;s/[[:alpha:]]/ -&/g;s/-[[:alpha:]]/& /g')
 			shift
@@ -218,7 +218,8 @@ while [ "$#" -gt 0 ]; do
 			FixedPassLen=$2; shift;;
 		-U|--unforce-upper) UnForceUpper=true;;
 		-u|--unforce-lower) UnForceLower=true;;
-		-*) printf "ERROR: unknown option '%s'\n" "$1" 1>&2
+		-[[:alpha:]]|--[[:alpha:]]*)
+			printf "ERROR: unknown option '%s'\n" "$1" 1>&2
 			suggest_help
 			exit 1;;
 		*) 	if [ "$FilePath" ]; then
