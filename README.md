@@ -45,10 +45,11 @@ every word and copy to clipboard:
 `genrepass -tCc "$HOME/Documents/Journal-2020.md"`
 
 Use the script's own source code, containing 10 special characters and
-with a length between 30 and 40 characters (two versions):
+with a length between 30 and 40 characters (three versions):
 
 `genrepass -s --min-pass-len 30 --max-pass-len 40 --spechars-amount 10`
 `genrepass -s -l 30 -L 40 -P 10`
+`genrepass -sl30L40P10`
 
 ## Options
 

@@ -80,9 +80,10 @@ every word and copy to clipboard:
     $ScriptName -tCc \"\$HOME/Documents/Journal-2020.md\"
 
 Use the script's own source code, containing 10 special characters and
-with a length between 30 and 40 characters:
+with a length between 30 and 40 characters (three versions):
     $ScriptName -s --min-pass-len 30 --max-pass-len 40 --spechars-amount 10
     $ScriptName -s -l 30 -L 40 -P 10
+    $ScriptName -sl30L40P10
 
 Options:
     -h | --help                  Display this help message and exit.
@@ -182,9 +183,9 @@ check_arg() {
 # Parse parameters:
 while [ "$#" -gt 0 ]; do
 	case $1 in
-		### Character classes don't seem to work here.
-		-[a-zA-Z][a-zA-Z]*)
-			opts=$(printf "%s" "$1" | sed 's/./ -&/g;s/\ --\ //')
+		-[A-Za-z][A-Za-z]*|-[A-Za-z][0-9]*)
+			opts=$(printf "%s" "$1" \
+				| sed 's/-//;s/[[:alpha:]]/ -&/g;s/-[[:alpha:]]/& /g')
 			shift
 			set -- $opts "$@"
 			continue;;
