@@ -55,7 +55,7 @@ A simple plain text URL bookmark manager. Copy, add, edit and delete bookmark
 entries through a series of dmenu prompts (I like this type of interaction).
 Based on dbuku but is even better. It can also get the URL and title of the
 active window if it is one of: qutebrowser, Chrome, Brave or Chromium,
-but it also gives you the abiliry to edit or delete a bookmark.
+but it also gives you the ability to edit or delete a bookmark.
 
 ### dbrowsel
 
