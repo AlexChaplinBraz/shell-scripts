@@ -2,17 +2,17 @@
 
 # Dmenu for disabling/enabling keyboard keys.
 
-SuperLDisable="Disable Super_L"
-SuperLEnable="Enable Super_L"
-SuperRDisable="Disable Super_R"
-SuperREnable="Enable Super_R"
+SuperLDisable='Disable Super_L'
+SuperLEnable='Enable Super_L'
+SuperRDisable='Disable Super_R'
+SuperREnable='Enable Super_R'
 
-KeyState=$(printf "%s\n%s\n%s\n%s" \
+KeyState=$(printf '%s\n%s\n%s\n%s' \
 	"$SuperLDisable" \
 	"$SuperLEnable" \
 	"$SuperRDisable" \
 	"$SuperREnable" \
-	| dmenu -i -l 10 -p "dkeys")
+	| dmenu -i -l 10 -p 'dkeys')
 
 case $KeyState in
 	"$SuperLDisable") Keycode='keycode 133 = 0x0000';;
