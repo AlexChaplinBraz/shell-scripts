@@ -8,6 +8,7 @@ if [ "$1" = "-r" ]; then
 	Files=$(sudo find "/etc" -type f)
 	AsRoot=" as root"
 else
+	### Could be worth using `-xdev`, to avoid traversing other filesystems.
 	Files1=$(find "$LBIN" -type l)
 	Files2=$(find "$HOME" "$LSHARE" -maxdepth 1 -type f)
 	Files3=$(find "$HOME/notes" "$XDG_CONFIG_HOME" "$LBIN" -type f)
@@ -19,14 +20,15 @@ else
 fi
 
 # Choose the file to open:
-Chosen="$(printf "%s" "$Files" \
-	| dmenu -i -l 30 -p "Select a file to edit${AsRoot}:")"
+Chosen=$(printf "%s" "$Files" \
+	| dmenu -i -l 30 -p "Select a file to edit${AsRoot}:")
 
 # Exit if no file was chosen:
 [ -z "$Chosen" ] && exit
 
 # Open the editor with the selected file:
 if [ "$1" = "-r" ]; then
+	### If `$EDITOR` is a GUI, permissions will likely get quite messed up.
 	sudo $EDITOR "$Chosen"
 else
 	$EDITOR "$Chosen"
