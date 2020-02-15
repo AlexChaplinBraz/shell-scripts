@@ -10,7 +10,7 @@
 # To cancel out of adding it, just keep spamming ESCAPE until you reach the
 # last prompt where you're asked to confirm or deny.
 
-### Known promlems:
+### Known problems:
 ### * If using this script with 'shift' as part of the hotkey the shift key
 ### gets stuck if you let go of it while xdotool is doing its thing.
 ### Can be solved by not using the shift key in the hotkey.
