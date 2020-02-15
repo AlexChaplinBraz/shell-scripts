@@ -24,22 +24,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-if ! command -v genrepass 1> /dev/null 2>&1; then
-	printf "ERROR: 'genrepass' is required for password generation.\n"
-	exit 1
-fi
-
 ScriptName=${0##*/}
 Version=1.0.0
 
-suggest_help() {
-	printf "Try '%s --help' for more information.\n" "$ScriptName"
-}
-
-err() {
-	printf 'ERROR: %s' "$2"
-	[ $1 -gt 0 ] && exit $1
-}
+TryHelp() { printf "Try '%s --help' for more information.\n" "$ScriptName"; }
+Err() { printf 'ERROR: %s\n' "$1" 1>&2; }
 
 # Compose the help message:
 HelpMessage="$ScriptName - Version: $Version
@@ -99,12 +88,17 @@ case $1 in
 		printf '%s' "$HelpMessage"; exit 1 ;;
 esac
 
+if ! command -v genrepass 1> /dev/null 2>&1; then
+	Err "'genrepass' is required for password generation."
+	exit 1
+fi
+
 # Get the location of the password store:
 PWStore=$PASSWORD_STORE_DIR
 [ -z "$PWStore" ] && PWStore="$HOME/.password-store"
 
 # Get a list of all entries:
-PassList=$(find $PWStore -name "*.gpg" | sed "s/\.gpg$//; s|$PWStore/||g")
+PassList=$(find $PWStore -name '*.gpg' | sed "s/\.gpg$//; s|$PWStore/||g")
 
 # Set menu options:
 MenuCopy='1. Copy entry to clipboard.'
@@ -114,12 +108,12 @@ MenuDelete='4. Delete an entry.'
 FullMenu="$MenuCopy\n$MenuCreate\n$MenuEdit\n$MenuDelete"
 
 # Prompt user to choose action:
-ChosenMenu=$(printf '%b' "$FullMenu" | dmenu -i -l 10 -p "dpass:")
+ChosenMenu=$(printf '%b' "$FullMenu" | dmenu -i -l 10 -p 'dpass:')
 
 # Copy selected entry to clipboard:
 if [ "$ChosenMenu" = "$MenuCopy" ]; then
 	ChosenPass=$(
-		printf '%s' "$PassList" | dmenu -i -l 30 -p 'Choose an entry to copy:'
+		printf '%s' "$PassList" | dmenu -i -l 30 -p 'Select entry to copy:'
 	)
 
 	pass show -c "$ChosenPass"
@@ -139,20 +133,22 @@ elif [ "$ChosenMenu" = "$MenuCreate" ]; then
 	# Prompt user to choose content type:
 	ChosenType=$(
 		printf '%s\n%s' "$TypeGenrepass" "$TypeSingleLine" \
-			| dmenu -i -l 10 -p 'Choose content type:'
+			| dmenu -i -l 10 -p 'Select content type:'
 	)
 
 	# Generate password with genrepass:
 	if [ "$ChosenType" = "$TypeGenrepass" ];then
 
 		# Set genrepass options:
-		 if [ -z "$1" ] && [ "$DPASS_OPTS" ]; then
-			GRPargs=$DPASS_OPTS
-		 elif [ -z "$1" ]; then
-			GRPargs='-sC'
-		 else
+		if [ -z "$1" ]; then
+			if [ -n "$DPASS_OPTS" ]; then
+				GRPargs=$DPASS_OPTS
+			else
+				GRPargs='-sC'
+			fi
+		else
 			GRPargs=$1
-		 fi
+		fi
 
 		# Keep generating passwords until one is selected:
 		while [ -z "$Content" ]; do
@@ -169,8 +165,8 @@ elif [ "$ChosenMenu" = "$MenuCreate" ]; then
 	elif [ -z "$ChosenType" ];then
 		exit 1
 	else
-		printf 'ERROR: invalid selection.\n'
-		suggest_help
+		Err 'Invalid selection.'
+		TryHelp
 		exit 1
 	fi
 
@@ -189,7 +185,7 @@ elif [ "$ChosenMenu" = "$MenuCreate" ]; then
 # Open entry with $EDITOR:
 elif [ "$ChosenMenu" = "$MenuEdit" ]; then
 	ChosenPass=$(
-		printf "%s" "$PassList" | dmenu -i -l 30 -p "Choose an entry to edit:"
+		printf '%s' "$PassList" | dmenu -i -l 30 -p "Select entry to edit:"
 	)
 
 	$TERMINAL -e pass edit "$ChosenPass"
@@ -197,7 +193,7 @@ elif [ "$ChosenMenu" = "$MenuEdit" ]; then
 # Delete an entry:
 elif [ "$ChosenMenu" = "$MenuDelete" ]; then
 	ChosenPass=$(
-		printf '%s' "$PassList" | dmenu -i -l 30 -p 'Choose an entry to delete:'
+		printf '%s' "$PassList" | dmenu -i -l 30 -p 'Select entry to delete:'
 	)
 
 	pass delete --force "$ChosenPass"
@@ -205,7 +201,7 @@ elif [ "$ChosenMenu" = "$MenuDelete" ]; then
 elif [ -z "$ChosenMenu" ]; then
 	exit 1
 else
-	printf 'ERROR: invalid selection.\n'
-	suggest_help
+	Err 'Invalid selection.'
+	TryHelp
 	exit 1
 fi
