@@ -2,29 +2,48 @@
 
 # Dmenu for easily finding a manual to open from a list of all manuals.
 
+### Detect maximum width of current screen, then set this variable accordingly.
 # Set a character width:
 #export MANWIDTH=80
 
-man $(apropos --long . | dmenu -i -l 30 | awk '{print $2, $1}' | tr -d '()')
+Chosen=$(
+	man -k . 2> /dev/null | while read Pkg Group _ Desc; do
+		# The `#- ` bit fixes some entries with botched short descriptions.
+		printf '%50s - %s\n' "$Pkg $Group" "${Desc#- }"
+	done | dmenu -i -l 30
+)
+
+FieldCount=0
+for Field in $Chosen; do
+	FieldCount=$((FieldCount + 1))
+
+	case $FieldCount in
+		1) Pkg=$Field ;;
+		2) Group=${Field%)} ;;
+		*) break ;;
+	esac
+done
+
+man "${Group#(}" "$Pkg"
 
 # Probably the most useful script ever.
 
-# There are some manuals that have the same name but different sections
-# denoted with what's inside (), one useful section to know is
-# the POSIX version of the manuals which are #p,
-# so just typing p) shows you the POSIX version (most of the time).
-# For more information read the initial part of the man-pages manual
+### Regarding `p)` bit: here on Ubuntu 16.04.6, we see, for example, `1posix`.
+# There are some manuals that have the same name but different sections denoted
+# with what's inside (), one useful section to know is the POSIX version of the
+# manuals which are #p, so just typing p) shows you the POSIX version (most of
+# the time). For more information read the initial part of the man-pages manual
 # and search 'intro' with this script.
-
+#
 # Keep in mind that newly installed programs with man pages tend not to appear
-# right away because the manual database hasn't been updated yet.
-# Depending on the system, it may be updated with a cron job, during boot, etc.
-# If you want to update it manually, run:
-# sudo mandb
-
-# Ideally it would run every time a program is installed/uninstalled,
-# but it seems a pain to set it up.
-# It takes a few seconds to finish, which is a bummer,
-# because I would have just put it at the start of this script.
-# I could also just make a wrapper script for pacman that runs "sudo mandb"
-# quietly if the un/installation was completed successfully.
+# right away because the manual database hasn't been updated yet. Depending on
+# the system, it may be updated with a cron job, during boot, etc. If you want
+# to update it manually, run:
+#
+#   sudo mandb
+#
+# Ideally it would run every time a program is installed/uninstalled, but it
+# seems a pain to set it up. It takes a few seconds to finish, which is a
+# bummer, because I would have just put it at the start of this script. I could
+# also just make a wrapper script for pacman that runs "sudo mandb" quietly if
+# the un/installation was completed successfully.
