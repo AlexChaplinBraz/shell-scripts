@@ -24,15 +24,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-[ -z "$(command -v genrepass)" ] && \
-	printf "ERROR: 'genrepass' is required for password generation.\n" && \
+if ! command -v genrepass 1> /dev/null 2>&1; then
+	printf "ERROR: 'genrepass' is required for password generation.\n"
 	exit 1
+fi
 
-ScriptName="$(basename $0)"
+ScriptName=${0##*/}
 Version=1.0.0
 
 suggest_help() {
 	printf "Try '%s --help' for more information.\n" "$ScriptName"
+}
+
+err() {
+	printf 'ERROR: %s' "$2"
+	[ $1 -gt 0 ] && exit $1
 }
 
 # Compose the help message:
@@ -42,8 +48,8 @@ License: MIT
 
 Usage: $ScriptName ['genrepass options']
 
-This script lets the user copy, add, edit and delete pass entries through
-a series of dmenu prompts.
+This script lets the user copy, add, edit and delete pass entries through a
+series of dmenu prompts.
 
 The script itself requires no arguments, but does require the user to have the
 complimentary genrepass utility by the same creator for password generation.
@@ -51,16 +57,17 @@ complimentary genrepass utility by the same creator for password generation.
 The default options for genrepass are:
 '-s' to use its own source code as file input
 '-C' to capitalize each word for better readability
-but the user can override that by passing them as the first argument.
-Do make sure to quote the whole block of options and arguments that you would
-normally pass to genrepass with single quotes.
+but the user can override that by passing them as the first argument. Do make
+sure to quote the whole block of options and arguments that you would normally
+pass to genrepass with single quotes.
 
-Another way to set the options is to export an environment variable
-named DPASS_OPTS, which takes the same format. This way you can simply
-run $ScriptName without any options.
+Another way to set the options is to export an environment variable named
+DPASS_OPTS, which takes the same format. This way you can simply run
+$ScriptName without any options.
 
 IMPORTANT: avoid using the '-c' for copying to clipboard because this script
-is set up in a way that pipes the stdout of genrepass into dmenu for you to see.
+           is set up in a way that pipes the stdout of genrepass into dmenu for
+           you to see.
 
 Keep in mind the pinentry program used for entering your passphrase to decrypt
 your .gpg files. If it's set to a terminal one, this script won't work properly.
@@ -83,118 +90,122 @@ Would find all the files insides the notes directory and select a random one
 to be used for your password generation.
 "
 
-# Print help and exit:
-[ "$1" = "-h" ] || [ "$1" = "--help" ] && \
-	printf "%s" "$HelpMessage" && \
-	exit 1
-
-# Print version and exit:
-[ "$1" = "-v" ] || [ "$1" = "--version" ] && \
-	printf "%s - Version: %s\n" "$ScriptName" "$Version" && \
-	exit 1
+case $1 in
+	-h|--help)
+		printf '%s' "$HelpMessage"; exit 0 ;;
+	-v|--version)
+		printf '%s - Version: %s\n' "$ScriptName" "$Version"; exit 1
+	*|'')
+		printf '%s' "$HelpMessage"; exit 1 ;;
+esac
 
 # Get the location of the password store:
-PWStore="$PASSWORD_STORE_DIR"
+PWStore=$PASSWORD_STORE_DIR
 [ -z "$PWStore" ] && PWStore="$HOME/.password-store"
 
 # Get a list of all entries:
-PassList="$(find $PWStore -name "*.gpg" \
-	| sed "s/\.gpg$//" \
-	| sed "s|$PWStore/||g")"
+PassList=$(find $PWStore -name "*.gpg" | sed "s/\.gpg$//; s|$PWStore/||g")
 
 # Set menu options:
-MenuCopy="1. Copy entry to clipboard."
-MenuCreate="2. Create new entry/Edit existing entry."
+MenuCopy='1. Copy entry to clipboard.'
+MenuCreate='2. Create new entry/Edit existing entry.'
 MenuEdit="3. Edit entry with $EDITOR."
-MenuDelete="4. Delete an entry."
+MenuDelete='4. Delete an entry.'
+FullMenu="$MenuCopy\n$MenuCreate\n$MenuEdit\n$MenuDelete"
 
 # Prompt user to choose action:
-ChosenMenu="$(printf "%s\n%s\n%s\n%s" \
-	"$MenuCopy" \
-	"$MenuCreate" \
-	"$MenuEdit" \
-	"$MenuDelete" \
-	| dmenu -i -l 10 -p "dpass:")"
+ChosenMenu=$(printf '%b' "$FullMenu" | dmenu -i -l 10 -p "dpass:")
 
 # Copy selected entry to clipboard:
 if [ "$ChosenMenu" = "$MenuCopy" ]; then
-	ChosenPass="$(printf "%s" "$PassList" \
-		| dmenu -i -l 30 -p "Choose an entry to copy:")"
+	ChosenPass=$(
+		printf '%s' "$PassList" | dmenu -i -l 30 -p 'Choose an entry to copy:'
+	)
+
 	pass show -c "$ChosenPass"
 
 # Create new entry/Edit existing entry:
 elif [ "$ChosenMenu" = "$MenuCreate" ]; then
-	ChosenName="$(printf "%s" "$PassList" \
-		| dmenu -i -l 30 -p "Input entry name:")"
+	ChosenName=$(
+		printf '%s' "$PassList" | dmenu -i -l 30 -p 'Input entry name:'
+	)
+
 	[ -z "$ChosenName" ] && exit 1
 
 	# Set menu options:
-	TypeGenrepass="1. Generate password with genrepass."
-	TypeSingleLine="2. Write a single line of content."
+	TypeGenrepass='1. Generate password with genrepass.'
+	TypeSingleLine='2. Write a single line of content.'
 
 	# Prompt user to choose content type:
-	ChosenType="$(printf "%s\n%s" \
-		"$TypeGenrepass" \
-		"$TypeSingleLine" \
-		| dmenu -i -l 10 -p "Choose content type:")"
+	ChosenType=$(
+		printf '%s\n%s' "$TypeGenrepass" "$TypeSingleLine" \
+			| dmenu -i -l 10 -p 'Choose content type:'
+	)
 
 	# Generate password with genrepass:
 	if [ "$ChosenType" = "$TypeGenrepass" ];then
 
 		# Set genrepass options:
 		 if [ -z "$1" ] && [ "$DPASS_OPTS" ]; then
-			GRPargs="$DPASS_OPTS"
+			GRPargs=$DPASS_OPTS
 		 elif [ -z "$1" ]; then
-			GRPargs="-sC"
+			GRPargs='-sC'
 		 else
-			GRPargs="$1"
+			GRPargs=$1
 		 fi
 
 		# Keep generating passwords until one is selected:
 		while [ -z "$Content" ]; do
-			Content="$(eval genrepass "$GRPargs" \
-				| dmenu -l 10 \
-				-p "ENTER to select, ESCAPE to generate new password:")"
+			Content=$(
+				eval genrepass "$GRPargs" | dmenu -l 10 \
+					-p 'ENTER to select, ESCAPE to generate new password:'
+			)
 		done
 
 	# Input custom single line content:
 	elif [ "$ChosenType" = "$TypeSingleLine" ];then
-		Content="$(printf "" | dmenu -p "Input content:")"
+		Content=$(printf '' | dmenu -p 'Input content:')
 
 	elif [ -z "$ChosenType" ];then
 		exit 1
 	else
-		printf "ERROR: invalid selection.\n"
+		printf 'ERROR: invalid selection.\n'
 		suggest_help
 		exit 1
 	fi
 
 	# Create a preview for the user to see their input:
-	Confirmation="$(printf "%s\nEntry: %s\nContent: %s" \
-		"This is a preview. Press ENTER to confirm or ESCAPE to cancel." \
-		"$ChosenName" "$Content" \
-		| dmenu -i -l 10)"
+	Confirmation=$(
+		printf '%s\nEntry: %s\nContent: %s' \
+			'This is a preview. Press ENTER to confirm or ESCAPE to cancel.' \
+			"$ChosenName" "$Content" | dmenu -i -l 10
+	)
 
 	# If the user pressed ENTER, create/edit the entry:
-	[ "$Confirmation" ] && \
-		printf "%s" "$Content" | pass add --echo --force "$ChosenName"
+	if [ "$Confirmation" ]; then
+		printf '%s' "$Content" | pass add --echo --force "$ChosenName"
+	fi
 
 # Open entry with $EDITOR:
 elif [ "$ChosenMenu" = "$MenuEdit" ]; then
-	ChosenPass="$(printf "%s" "$PassList" \
-		| dmenu -i -l 30 -p "Choose an entry to edit:")"
-		$TERMINAL -e pass edit "$ChosenPass"
+	ChosenPass=$(
+		printf "%s" "$PassList" | dmenu -i -l 30 -p "Choose an entry to edit:"
+	)
+
+	$TERMINAL -e pass edit "$ChosenPass"
 
 # Delete an entry:
 elif [ "$ChosenMenu" = "$MenuDelete" ]; then
-	ChosenPass="$(printf "%s" "$PassList" \
-		| dmenu -i -l 30 -p "Choose an entry to delete:")"
+	ChosenPass=$(
+		printf '%s' "$PassList" | dmenu -i -l 30 -p 'Choose an entry to delete:'
+	)
+
 	pass delete --force "$ChosenPass"
 
 elif [ -z "$ChosenMenu" ]; then
 	exit 1
 else
-	printf "ERROR: invalid selection.\n"
+	printf 'ERROR: invalid selection.\n'
 	suggest_help
 	exit 1
 fi
