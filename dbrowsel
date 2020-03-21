@@ -13,11 +13,11 @@ B-Chrome
 A-Chrome
 R-Chrome"
 
-Chosen="$(printf "%s" "$Browsers" \
-	| dmenu -i -l 20 -p "Select browser:")"
+Chosen=$(printf "%s" "$Browsers" \
+	| dmenu -i -l 20 -p "Select browser:")
 [ -z "$Chosen" ] && exit 1
 
-case "$Chosen" in
+case $Chosen in
 	Brave) brave "$@";;
 	qutebrowser) qutebrowser "$@";;
 	Chrome) google-chrome-stable "$@";;
