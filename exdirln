@@ -23,39 +23,39 @@ Other options:
     -v | --version      Display version and exit.
 "
 
-Error() {
+error() {
     printf "ERROR: %s\nTry '%s --help' for more information.\n" \
            "$1" "$ScriptName" 1>&2
     exit 1
 }
 
 case $1 in
-    -h|--help) printf "%s" "$HelpMessage"; exit 0;;
-    -v|--version) printf "%s\n" "$Version"; exit 0;;
+    -h|--help) printf '%s' "$HelpMessage"; exit 0;;
+    -v|--version) printf '%s\n' "$Version"; exit 0;;
 esac
 
 if [ -z "$1" ]; then
-    Error "a source directory is required."
-elif [ "$1" = "-c" ]; then
-    SourceDir="$(pwd)"
+    error 'a source directory is required.'
+elif [ "$1" = '-c' ]; then
+    SourceDir=$(pwd)
 elif [ -d "$1" ]; then
-    SourceDir="$(printf "%s" "$1" | sed 's/\/$//')"
+    SourceDir=$(printf '%s' "$1" | sed 's/\/$//')
 else
-    Error 'invalid source directory.'
+    error 'invalid source directory.'
 fi
 
 if [ -z "$2" ]; then
-    Error 'a target directory is required.'
-elif [ "$2" = "-b" ]; then
-    TargetDir="$(printf "%s" "$LBIN" | sed 's/\/$//')"
+    error 'a target directory is required.'
+elif [ "$2" = '-b' ]; then
+    TargetDir=$(printf '%s' "$LBIN" | sed 's/\/$//')
 elif [ -d "$2" ]; then
-    TargetDir="$(printf "%s" "$2" | sed 's/\/$//')"
+    TargetDir=$(printf '%s' "$2" | sed 's/\/$//')
 else
-    Error 'invalid target directory.'
+    error 'invalid target directory.'
 fi
 
-Files="$(find "$SourceDir" -maxdepth 1 -type f \
-    -perm /111 -exec basename {} \; )"
+Files=$(find "$SourceDir" -maxdepth 1 -type f \
+             -perm /111 -exec basename {} \; )
 
 for file in $Files; do
     ln -sf "$SourceDir/$file" "$TargetDir/$file"

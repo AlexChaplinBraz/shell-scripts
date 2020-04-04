@@ -3,29 +3,29 @@
 # Rsync specific configuration files into a manageable git controlled directory.
 
 rsync -avR \
-	"$HOME/./.config/bspwm/bspwmrc" \
-	"$HOME/./.config/calcurse/conf" \
-	"$HOME/./.config/calcurse/keys" \
-	"$HOME/./.config/git/config" \
-	"$HOME/./.config/lf/lfrc" \
-	"$HOME/./.config/mpd/mpd.conf" \
-	"$HOME/./.config/mpv/input.conf" \
-	"$HOME/./.config/ncmpcpp/bindings" \
-	"$HOME/./.config/ncmpcpp/config" \
-	"$HOME/./.config/newsboat/config" \
-	"$HOME/./.config/nvim/init.vim" \
-	"$HOME/./.config/polybar/config" \
-	"$HOME/./.config/polybar/launch" \
-	"$HOME/./.config/sxhkd/sxhkdrc" \
-	"$HOME/./.config/zathura/zathurarc" \
-	"$HOME/./.config/zsh/.zkbd/linux-pc-linux-gnu" \
-	"$HOME/./.config/zsh/.zkbd/st-256color-pc-linux-gnu" \
-	"$HOME/./.config/zsh/.zshrc" \
-	"$HOME/./.config/aliasrc" \
-	"$HOME/./.config/envvars" \
-	"$HOME/./.local/share/dirmarks" \
-	"$HOME/./.local/share/emoji" \
-	"$HOME/./.config/inputrc" \
-	"$HOME/./.xinitrc" \
-	"$HOME/./.zprofile" \
-	"$HOME/proj/dotfiles"
+      "$HOME/./.config/bspwm/bspwmrc" \
+      "$HOME/./.config/calcurse/conf" \
+      "$HOME/./.config/calcurse/keys" \
+      "$HOME/./.config/git/config" \
+      "$HOME/./.config/lf/lfrc" \
+      "$HOME/./.config/mpd/mpd.conf" \
+      "$HOME/./.config/mpv/input.conf" \
+      "$HOME/./.config/ncmpcpp/bindings" \
+      "$HOME/./.config/ncmpcpp/config" \
+      "$HOME/./.config/newsboat/config" \
+      "$HOME/./.config/nvim/init.vim" \
+      "$HOME/./.config/polybar/config" \
+      "$HOME/./.config/polybar/launch" \
+      "$HOME/./.config/sxhkd/sxhkdrc" \
+      "$HOME/./.config/zathura/zathurarc" \
+      "$HOME/./.config/zsh/.zkbd/linux-pc-linux-gnu" \
+      "$HOME/./.config/zsh/.zkbd/st-256color-pc-linux-gnu" \
+      "$HOME/./.config/zsh/.zshrc" \
+      "$HOME/./.config/aliasrc" \
+      "$HOME/./.config/envvars" \
+      "$HOME/./.local/share/dirmarks" \
+      "$HOME/./.local/share/emoji" \
+      "$HOME/./.config/inputrc" \
+      "$HOME/./.xinitrc" \
+      "$HOME/./.zprofile" \
+      "$HOME/proj/dotfiles"

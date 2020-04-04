@@ -3,6 +3,6 @@
 # Script for updating Blender master.
 
 python "$HOME/.local/src/BlenderUpdaterCLI/BlenderUpdaterCLI.py" \
-	-p "$HOME/.local/opt/blendermaster/" \
-	-t "$HOME/.local/opt/blendertemp/" \
-	-b 2.83 -n -o "linux"
+       -p "$HOME/.local/opt/blendermaster/" \
+       -t "$HOME/.local/opt/blendertemp/" \
+       -b 2.83 -n -o 'linux'

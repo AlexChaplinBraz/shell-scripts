@@ -2,6 +2,6 @@
 
 # Updates mirrorlist with a ranked by speed list of the closest servers.
 
-curl -s "https://www.archlinux.org/mirrorlist/?country=ES&country=PT&country=FR&country=GB&protocol=https&use_mirror_status=on" \
-	| sed -e 's/^#Server/Server/' -e '/^#/d' \
-	| rankmirrors -n 6 - > "/etc/pacman.d/mirrorlist"
+curl -s 'https://www.archlinux.org/mirrorlist/?country=ES&country=PT&country=FR&country=GB&protocol=https&use_mirror_status=on' \
+    | sed -e 's/^#Server/Server/' -e '/^#/d' \
+    | rankmirrors -n 6 - > '/etc/pacman.d/mirrorlist'

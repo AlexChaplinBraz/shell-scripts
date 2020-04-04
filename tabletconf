@@ -4,17 +4,16 @@
 
 ### Need to figure out how to calculate the Coordinate Transformation Matrix.
 
-# This just inverts it for "left handed" use but is vertically stretched:
-#xinput set-prop "HID 256c:006e Pen Pen (0)" --type=float "Coordinate Transformation Matrix" -1, 0, 1, 0, -1, 1, 0, 0, 1
+# This just inverts it for 'left handed' use but is vertically stretched:
+#xinput set-prop 'HID 256c:006e Pen Pen (0)' --type=float 'Coordinate Transformation Matrix' -1, 0, 1, 0, -1, 1, 0, 0, 1
 
 # This inverts it and constricts it to the left monitor, but it's too big:
-xinput set-prop "HID 256c:006e Pen Pen (0)" --type=float "Coordinate Transformation Matrix" -0.5, 0, 0.5, 0, -1, 1, 0, 0, 1
+xinput set-prop 'HID 256c:006e Pen Pen (0)' --type=float 'Coordinate Transformation Matrix' -0.5, 0, 0.5, 0, -1, 1, 0, 0, 1
 
 # Same but right monitor:
-#xinput set-prop "HID 256c:006e Pen Pen (0)" --type=float "Coordinate Transformation Matrix" -0.5, 0, 1, 0, -1, 1, 0, 0, 1
+#xinput set-prop 'HID 256c:006e Pen Pen (0)' --type=float 'Coordinate Transformation Matrix' -0.5, 0, 1, 0, -1, 1, 0, 0, 1
 
 # This is almost it, taking 25% off the top, but I can't find the bottom:
-#xinput set-prop "HID 256c:006e Pen Pen (0)" --type=float "Coordinate Transformation Matrix" -1, 0, 1, -0.25, -1, 1, -0.25, 0, 1
+#xinput set-prop 'HID 256c:006e Pen Pen (0)' --type=float 'Coordinate Transformation Matrix' -1, 0, 1, -0.25, -1, 1, -0.25, 0, 1
 
 # The ideal would be to have a dual monitor one that's proportional vertically.
-

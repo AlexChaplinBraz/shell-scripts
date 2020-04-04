@@ -2,20 +2,20 @@
 
 # Rsync wrapper for backing up $HOME with dated, incremental versioning.
 
-Versioning="/backup/home/versioning/$(date +"%Y-%m-%d.%H-%M-%S")"
+Versioning="/backup/home/versioning/$(date +'%Y-%m-%d.%H-%M-%S')"
 mkdir "$Versioning"
 sudo rsync -abv --progress \
-	--backup-dir="$Versioning" --delete \
-	--exclude=".cache/" \
-	--exclude=".config/google-chrome/" \
-	--exclude=".config/BraveSoftware/" \
-	--exclude=".local/opt/" \
-	--exclude=".local/share/vbvms/" \
-	--exclude=".local/share/qutebrowser/" \
-	--exclude=".local/share/vifm/Trash/" \
-	--exclude=".local/share/xorg/" \
-	--exclude=".local/src/blender-git/" \
-	--exclude=".local/src/blender_docs/" \
-	--exclude="down/" \
-	"$HOME/" \
-	"/backup/home/alex"
+     --backup-dir="$Versioning" --delete \
+     --exclude='.cache/' \
+     --exclude='.config/google-chrome/' \
+     --exclude='.config/BraveSoftware/' \
+     --exclude='.local/opt/' \
+     --exclude='.local/share/vbvms/' \
+     --exclude='.local/share/qutebrowser/' \
+     --exclude='.local/share/vifm/Trash/' \
+     --exclude='.local/share/xorg/' \
+     --exclude='.local/src/blender-git/' \
+     --exclude='.local/src/blender_docs/' \
+     --exclude='down/' \
+     "$HOME/" \
+     '/backup/home/alex'
