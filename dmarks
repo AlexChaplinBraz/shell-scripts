@@ -200,7 +200,7 @@ elif [ "$ChosenMenu" = "$MenuEdit" ]; then
 		[ -z "$SelectedTag" ] && break
 		Tags="$Tags$SelectedTag,"
 	done
-	Tags="${Tags%?}"
+	Tags="${Tags%,}"
 
 	# Create a preview for the user to see their input:
 	Confirmation="$(printf \
