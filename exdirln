@@ -2,57 +2,61 @@
 
 # Link all executable files inside one directory into another.
 
-ScriptName="$(basename "$0")"
+ScriptName=${0##*/}
+Version=1.0.1
 
-HelpMessage="$ScriptName links all the executable files inside one directory
-into another directory replacing any existing links and requires two arguments.
+HelpMessage="$ScriptName - Version: $Version
+Creator: Alexander Chaplin Braz (http://alexchaplinbraz.com)
+License: MIT
+
+This script links all the executable files inside one directory into another
+directory replacing any existing links. It requires two arguments:
 
 First argument is the directory where the files to be linked are located.
-	Use -c for current directory.
+    Use -c for current directory.
 
 Second argument is the directory where to link them.
-	Use -b for \$LBIN, if it's set to the local bin folder by the user.
+    Use -b for \$LBIN, if it's set to the local bin folder by the user.
+
+Other options:
+    -h | --help         Display this help message and exit.
+    -v | --version      Display version and exit.
 "
 
-suggest_help() {
-	printf "Try '%s --help' for more information.\n" "$ScriptName"
+Error() {
+    printf "ERROR: %s\nTry '%s --help' for more information.\n" \
+           "$1" "$ScriptName" 1>&2
+    exit 1
 }
 
-[ "$1" = "-h" ] || [ "$1" = "--help" ] && \
-	printf "$HelpMessage" &&
-	exit 1
+case $1 in
+    -h|--help) printf "%s" "$HelpMessage"; exit 0;;
+    -v|--version) printf "%s\n" "$Version"; exit 0;;
+esac
 
 if [ -z "$1" ]; then
-	printf "ERROR: a source directory is required.\n"
-	suggest_help
-	exit 1
+    Error "a source directory is required."
 elif [ "$1" = "-c" ]; then
-	Directory1="$(pwd)"
+    SourceDir="$(pwd)"
 elif [ -d "$1" ]; then
-	Directory1="$(printf "%s" "$1" | sed 's/\/$//')"
+    SourceDir="$(printf "%s" "$1" | sed 's/\/$//')"
 else
-	printf "ERROR: invalid source directory.\n"
-	suggest_help
-	exit 1
+    Error 'invalid source directory.'
 fi
 
 if [ -z "$2" ]; then
-	printf "ERROR: a target directory is required.\n"
-	suggest_help
-	exit 1
+    Error 'a target directory is required.'
 elif [ "$2" = "-b" ]; then
-	Directory2="$(printf "%s" "$LBIN" | sed 's/\/$//')"
+    TargetDir="$(printf "%s" "$LBIN" | sed 's/\/$//')"
 elif [ -d "$2" ]; then
-	Directory2="$(printf "%s" "$2" | sed 's/\/$//')"
+    TargetDir="$(printf "%s" "$2" | sed 's/\/$//')"
 else
-	printf "ERROR: invalid target directory.\n"
-	suggest_help
-	exit 1
+    Error 'invalid target directory.'
 fi
 
-Files="$(find "$Directory1" -maxdepth 1 -type f \
-	-perm /111 -exec basename {} \; )"
+Files="$(find "$SourceDir" -maxdepth 1 -type f \
+    -perm /111 -exec basename {} \; )"
 
 for file in $Files; do
-	ln -sf "$Directory1/$file" "$Directory2/$file"
+    ln -sf "$SourceDir/$file" "$TargetDir/$file"
 done
