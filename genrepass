@@ -43,8 +43,8 @@ MaxPassLen=30
 FixedPassLen=
 NumAmount=2
 SpeCharsAmount=2
-SpeChars="#%!@+-_="
-FilePath=""
+SpeChars='#%!@+-_='
+FilePath=
 UseSource=
 CopyToClipboard=
 Debug=
@@ -56,12 +56,13 @@ ForceLower=
 UnForceUpper=
 UnForceLower=
 ResetCounter=0
-Version=1.1.1
-Password=""
-ScriptName="${0##*/}"
+Password=
+ScriptName=${0##*/}
+Version=1.1.2
 
-suggest_help() {
+suggest_help_and_exit() {
 	printf "Try '%s --help' for more information.\n" "$ScriptName" 1>&2
+	exit 1
 }
 
 HelpMessage="$ScriptName - Version: $Version
@@ -147,36 +148,34 @@ Options:
 # Read as: check argument ($2) for these types in option $1.
 # Requires shifting afterwards.
 check_arg() {
-	if printf "%s" "$1" | grep -qE '^\+?[[:digit:]]+$';then
-		Type="positive integer"
-	elif printf "%s" "$1" | grep -qE '^-[[:digit:]]+$';then
-		Type="negative integer"
-	elif printf "%s" "$1" | grep -qE '^\+?[[:digit:]]*\.?([[:digit:]]+)$';then
-		Type="positive float"
-	elif printf "%s" "$1" | grep -qE '^-[[:digit:]]*\.?([[:digit:]]+)$';then
-		Type="negative float"
-	elif printf "%s" "$1" | grep -qE '^[[:alpha:]]+$';then
-		Type="alphabetic"
-	elif printf "%s" "$1" | grep -qE '^[[:alnum:]]+$';then
-		Type="alphanumeric"
-	elif printf "%s" "$1" | grep -qE '^--?[[:alpha:]]+$' || [ -z "$1" ];then
+	if printf '%s' "$1" | grep -qE '^\+?[[:digit:]]+$';then
+		Type='positive integer'
+	elif printf '%s' "$1" | grep -qE '^-[[:digit:]]+$';then
+		Type='negative integer'
+	elif printf '%s' "$1" | grep -qE '^\+?[[:digit:]]*\.?([[:digit:]]+)$';then
+		Type='positive float'
+	elif printf '%s' "$1" | grep -qE '^-[[:digit:]]*\.?([[:digit:]]+)$';then
+		Type='negative float'
+	elif printf '%s' "$1" | grep -qE '^[[:alpha:]]+$';then
+		Type='alphabetic'
+	elif printf '%s' "$1" | grep -qE '^[[:alnum:]]+$';then
+		Type='alphanumeric'
+	elif printf '%s' "$1" | grep -qE '^--?[[:alpha:]]+$' || [ -z "$1" ];then
 		Missing=true
 	else
-		Type="UNKNOWN"
+		Type='UNKNOWN'
 	fi
 
-	ExpectedType="$(printf "%s" "$2" | sed 's/|/ or /g')"
+	ExpectedType=$(printf '%s' "$2" | sed 's/|/ or /g')
 
 	if [ $Missing ]; then
 		printf "MISSING ARGUMENT: option '%s' expects %s.\n" \
 			"$3" "$ExpectedType" 1>&2
-		suggest_help
-		exit 1
-	elif ! printf "%s" "$Type" | grep -qE "$2"; then
+		suggest_help_and_exit
+	elif ! printf '%s' "$Type" | grep -qE "$2"; then
 		printf "TYPE ERROR: '%s' expects %s, got %s '%s'.\n" \
 			"$3" "$ExpectedType" "$Type" "$1" 1>&2
-		suggest_help
-		exit 1
+		suggest_help_and_exit
 	fi
 }
 
@@ -184,56 +183,52 @@ check_arg() {
 while [ "$#" -gt 0 ]; do
 	case $1 in
 		-[[:alpha:]][[:alpha:]]*|-[[:alpha:]][[:digit:]]*)
-			opts=$(printf "%s" "$1" \
+			opts=$(printf '%s' "$1" \
 				| sed 's/-//;s/[[:alpha:]]/ -&/g;s/-[[:alpha:]]/& /g')
 			shift
 			set -- $opts "$@"
 			continue;;
-		-h|--help) printf "%s" "$HelpMessage"; exit 0;;
-		-v|--version) printf "%s\n" "$Version"; exit 0;;
+		-h|--help) printf '%s' "$HelpMessage"; exit 0;;
+		-v|--version) printf '%s\n' "$Version"; exit 0;;
 		-d|--debug) Debug=true;;
 		-s|--use-source) UseSource=true;;
 		-c|--clipboard) CopyToClipboard=true;;
 		-C|--capitalize) Capitalize=true;;
 		-r|--replace) Replace=true;;
 		-t|--translate-accents) TransAccents=true;;
-		-R|--max-resets) check_arg "$2" "positive integer" "$1"
+		-R|--max-resets) check_arg "$2" 'positive integer' "$1"
 			MaxResets=$2; shift;;
-		-l|--min-pass-len) check_arg "$2" "positive integer" "$1"
+		-l|--min-pass-len) check_arg "$2" 'positive integer' "$1"
 			MinPassLen=$2; shift;;
-		-L|--max-pass-len) check_arg "$2" "positive integer" "$1"
+		-L|--max-pass-len) check_arg "$2" 'positive integer' "$1"
 			MaxPassLen=$2; shift;;
-		-N|--num-amount) check_arg "$2" "positive integer" "$1"
+		-N|--num-amount) check_arg "$2" 'positive integer' "$1"
 			NumAmount=$2; shift;;
-		-P|--spechars-amount) check_arg "$2" "positive integer" "$1"
+		-P|--spechars-amount) check_arg "$2" 'positive integer' "$1"
 			SpeCharsAmount=$2; shift;;
 		-S|--spechars) SpeChars=$2; shift;;
-		-A|--upper-amount) check_arg "$2" "positive integer" "$1"
+		-A|--upper-amount) check_arg "$2" 'positive integer' "$1"
 			UpperAmount=$2; shift;;
-		-a|--lower-amount) check_arg "$2" "positive integer" "$1"
+		-a|--lower-amount) check_arg "$2" 'positive integer' "$1"
 			LowerAmount=$2; shift;;
 		-F|--force-upper) ForceUpper=true;;
 		-f|--force-lower) ForceLower=true;;
-		-x|--fixed-pass-len) check_arg "$2" "positive integer" "$1"
+		-x|--fixed-pass-len) check_arg "$2" 'positive integer' "$1"
 			FixedPassLen=$2; shift;;
 		-U|--unforce-upper) UnForceUpper=true;;
 		-u|--unforce-lower) UnForceLower=true;;
 		-[[:alpha:]]|--[[:alpha:]]*)
 			printf "ERROR: unknown option '%s'\n" "$1" 1>&2
-			suggest_help
-			exit 1;;
+			suggest_help_and_exit;;
 		*) 	if [ "$FilePath" ]; then
 				printf "ERROR: can't set file twice.\n" 1>&2
-				suggest_help
-				exit 1
+				suggest_help_and_exit
 			elif [ ! -f "$1" ]; then
-				printf "ERROR: not a file.\n" 1>&2
-				suggest_help
-				exit 1
+				printf 'ERROR: not a file.\n' 1>&2
+				suggest_help_and_exit
 			elif [ ! -s "$1" ]; then
-				printf "ERROR: file is empty.\n" 1>&2
-				suggest_help
-				exit 1
+				printf 'ERROR: file is empty.\n' 1>&2
+				suggest_help_and_exit
 			else
 				FilePath="$1"
 			fi;;
@@ -242,56 +237,54 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ $Debug ]; then
-	printf "Debug Mode\n\n"
-	printf "Replace: %s\n" $Replace
-	printf "Capitalize: %s\n" $Capitalize
-	printf "UseSource: %s\n" $UseSource
-	printf "FilePath: %s\n" "$FilePath"
-	printf "CopyToClipboard: %s\n" $CopyToClipboard
-	printf "MaxResets: %s\n" $MaxResets
-	printf "MinPassLen: %s\n" $MinPassLen
-	printf "MaxPassLen: %s\n" $MaxPassLen
-	printf "FixedPassLen: %s\n" $FixedPassLen
-	printf "NumAmount: %s\n" $NumAmount
-	printf "SpeCharsAmount: %s\n" $SpeCharsAmount
-	printf "SpeChars: %s\n" "$SpeChars"
-	printf "Debug: %s\n" $Debug
-	printf "TransAccents: %s\n" $TransAccents
-	printf "UpperAmount: %s\n" $UpperAmount
-	printf "LowerAmount: %s\n" $LowerAmount
-	printf "ForceUpper: %s\n" $ForceUpper
-	printf "ForceLower: %s\n" $ForceLower
-	printf "UnForceUpper: %s\n" $UnForceUpper
-	printf "UnForceLower: %s\n" $UnForceLower
+	printf 'Debug Mode\n\n'
+	printf 'Replace: %s\n' $Replace
+	printf 'Capitalize: %s\n' $Capitalize
+	printf 'UseSource: %s\n' $UseSource
+	printf 'FilePath: %s\n' "$FilePath"
+	printf 'CopyToClipboard: %s\n' $CopyToClipboard
+	printf 'MaxResets: %s\n' $MaxResets
+	printf 'MinPassLen: %s\n' $MinPassLen
+	printf 'MaxPassLen: %s\n' $MaxPassLen
+	printf 'FixedPassLen: %s\n' $FixedPassLen
+	printf 'NumAmount: %s\n' $NumAmount
+	printf 'SpeCharsAmount: %s\n' $SpeCharsAmount
+	printf 'SpeChars: %s\n' "$SpeChars"
+	printf 'Debug: %s\n' $Debug
+	printf 'TransAccents: %s\n' $TransAccents
+	printf 'UpperAmount: %s\n' $UpperAmount
+	printf 'LowerAmount: %s\n' $LowerAmount
+	printf 'ForceUpper: %s\n' $ForceUpper
+	printf 'ForceLower: %s\n' $ForceLower
+	printf 'UnForceUpper: %s\n' $UnForceUpper
+	printf 'UnForceLower: %s\n' $UnForceLower
 fi
 
 # Get the text to use for password generation:
 if [ $UseSource ] && [ "$FilePath" ]; then
 	printf "ERROR: can't use source and provide a file at the same time.\n" 1>&2
-	suggest_help
-	exit 1
+	suggest_help_and_exit
 elif [ $UseSource ]; then
-	Text="$(cat "$0")"
+	Text=$(cat "$0")
 elif [ "$FilePath" ]; then
-	Text="$(cat "$FilePath")"
+	Text=$(cat "$FilePath")
 else
-	printf "ERROR: no file was provided.\n" 1>&2
-	suggest_help
-	exit 1
+	printf 'ERROR: no file was provided.\n' 1>&2
+	suggest_help_and_exit
 fi
 
 # Calculate the correct MaxPassLen if inserting:
 [ ! $Replace ] && MaxPassLen=$((MaxPassLen - SpeCharsAmount - NumAmount))
-[ $Debug ] && printf "MaxPassLen when Replace is off: %s\n" $MaxPassLen
+[ $Debug ] && printf 'MaxPassLen when Replace is off: %s\n' $MaxPassLen
 
 # Calculate the correct MinPassLen if inserting:
 [ ! $Replace ] && MinPassLen=$((MinPassLen - SpeCharsAmount - NumAmount))
-[ $Debug ] && printf "MinPassLen when Replace is off: %s\n\n" $MinPassLen
+[ $Debug ] && printf 'MinPassLen when Replace is off: %s\n\n' $MinPassLen
 
 # Check that MaxPassLen isn't lower than MinPassLen:
 [ $MaxPassLen -lt $MinPassLen ] && \
 	printf "INVALID ARGUMENTS: '%s' can't be lower than '%s'.\n" \
-		"--max-pass-len" "--min-pass-len" 1>&2 && \
+		'--max-pass-len' '--min-pass-len' 1>&2 && \
 	exit 1
 
 # Set fixed password length if set:
@@ -304,18 +297,18 @@ fi
 
 # Get rid of accents on characters so they aren't lost:
 if [ $TransAccents ]; then
-	[ "$(uchardet "$FilePath")" = "UTF-8" ] && Text=$(printf "%s" "$Text" \
+	[ "$(uchardet "$FilePath")" = 'UTF-8' ] && Text=$(printf '%s' "$Text" \
 		| iconv -f UTF-8 -t ASCII//TRANSLIT)
 fi
 
 # Separate every word to a new numbered line and only keep [A-Za-z]:
-CleanText=$(printf "%s" "$Text" \
+CleanText=$(printf '%s' "$Text" \
 	| tr -cd '\12\40\101-\132\141-\172' \
 	| tr -s ' ' '\n' \
 	| nl -n ln)
 
 # Total amount of words:
-TextWC=$(printf "%s" "$CleanText" | wc -l)
+TextWC=$(printf '%s' "$CleanText" | wc -l)
 
 # Generate a random starting point:
 index=$(shuf -i 1-$TextWC -n1)
@@ -323,19 +316,19 @@ index=$(shuf -i 1-$TextWC -n1)
 # Generate the word-only password:
 while true ; do
 	if [ $Capitalize ]; then
-		Password=$Password$(printf "%s" "$CleanText" \
+		Password=$Password$(printf '%s' "$CleanText" \
 		| grep -w ^$index \
 		| awk '{printf $2}' \
 		| sed 's/./\U&/')
-		[ $Debug ] && printf "%s\n" "$Password"
+		[ $Debug ] && printf '%s\n' "$Password"
 	else
-		Password=$Password$(printf "%s" "$CleanText" \
+		Password=$Password$(printf '%s' "$CleanText" \
 		| grep -w ^$index \
 		| awk '{printf $2}')
-		[ $Debug ] && printf "%s\n" "$Password"
+		[ $Debug ] && printf '%s\n' "$Password"
 	fi
 	[ $ResetCounter -ge $MaxResets ] && \
-		Password="$(expr substr "$Password" 1 $MaxPassLen)"
+		Password=$(expr substr "$Password" 1 $MaxPassLen)
 	[ ${#Password} -gt $MaxPassLen ] && Password=""
 	[ -z "$Password" ] && ResetCounter=$((ResetCounter + 1))
 	[ ${#Password} -ge $MinPassLen ] && break
@@ -344,7 +337,7 @@ while true ; do
 done
 
 [ $Debug ] && \
-	printf "\n%s <-- Character Count: %s\n" \
+	printf '\n%s <-- Character Count: %s\n' \
 	"$Password" ${#Password}
 
 # Generate random, non-repeated positions so that the same characters
@@ -354,16 +347,16 @@ if [ $Replace ]; then
 		1-${#Password} \
 		-n$((SpeCharsAmount + NumAmount)) \
 		| nl -n ln)
-	[ $Debug ] && printf "\n%s\n" "$Positions"
+	[ $Debug ] && printf '\n%s\n' "$Positions"
 fi
 
 # Function for adding characters:
 add_char() {
-	if [ "$1" = "special" ]; then
+	if [ "$1" = 'special' ]; then
 		charAmount=$SpeCharsAmount
 		getChar='expr substr "$SpeChars" $(shuf -i 1-${#SpeChars} -n1) 1'
 		grepArg='^$((index + 1))'
-	elif [ "$1" = "number" ]; then
+	elif [ "$1" = 'number' ]; then
 		charAmount=$NumAmount
 		getChar='shuf -i 0-9 -n1'
 		grepArg='^$((index + 1 + SpeCharsAmount))'
@@ -371,18 +364,18 @@ add_char() {
 
 	index=0
 	while [ $index -lt $charAmount ]; do
-		char="$(eval "$getChar")"
+		char=$(eval "$getChar")
 		if [ $Replace ]; then
-			pos=$(printf "%s" "$Positions" \
+			pos=$(printf '%s' "$Positions" \
 				| grep -w $grepArgs \
 				| awk '{printf $2}')
-			[ $Debug ] && printf "%s at %s  " "$char" $pos
-			Password=$(printf "%s" "$Password" \
+			[ $Debug ] && printf '%s at %s  ' "$char" $pos
+			Password=$(printf '%s' "$Password" \
 				| sed s/./"$char"/$pos)
 		else
 			pos=$(shuf -i 1-${#Password} -n1)
-			[ $Debug ] && printf "%s at %s  " "$char" $pos
-			Password=$(printf "%s" "$Password" \
+			[ $Debug ] && printf '%s at %s  ' "$char" $pos
+			Password=$(printf '%s' "$Password" \
 				| sed s/./"$char"\&/$pos)
 		fi
 		index=$((index + 1))
@@ -393,80 +386,80 @@ add_char() {
 add_char special
 
 [ $Debug ] && \
-	printf "\n%s <-- Character Count: %s\n" \
+	printf '\n%s <-- Character Count: %s\n' \
 	"$Password" ${#Password}
 
 # Add numbers to the password:
 add_char number
 
 [ $Debug ] && \
-	printf "\n%s <-- Character Count: %s\n" \
+	printf '\n%s <-- Character Count: %s\n' \
 	"$Password" ${#Password}
 
 # Function for changing capitalization:
 change_case_to() {
-	if [ "$1" = "upper" ]; then
+	if [ "$1" = 'upper' ]; then
 		forceState=$ForceUpper
 		caseAmount=$UpperAmount
 		grepClass='[[:lower:]]'
 		trString1='[:lower:]'
 		trString2='[:upper:]'
-		toCase="Upper"
-	elif [ "$1" = "lower" ]; then
+		toCase='Upper'
+	elif [ "$1" = 'lower' ]; then
 		forceState=$ForceLower
 		caseAmount=$LowerAmount
 		grepClass='[[:upper:]]'
 		trString1='[:upper:]'
 		trString2='[:lower:]'
-		toCase="Lower"
+		toCase='Lower'
 	fi
 
 	index=1
 	while [ $forceState ] && [ $index -le $caseAmount ]; do
 		pos=$(shuf -i 1-${#Password} -n1)
-		char="$(expr substr "$Password" $pos 1)"
-		[ $Debug ] && printf "\n%s at %s" "$char" $pos
-		if printf "%s" "$char" | grep -q "$grepClass"; then
-			char="$(printf "%s" "$char" | tr "$trString1" "$trString2")"
-			[ $Debug ] && printf "\n%s at %s <-- To %s" "$char" $pos "$toCase"
-			Password="$(printf "%s" "$Password" \
-				| sed s/./"$char"/$pos)"
-			[ $Debug ] && printf "\n%s" "$Password"
+		char=$(expr substr "$Password" $pos 1)
+		[ $Debug ] && printf '\n%s at %s' "$char" $pos
+		if printf '%s' "$char" | grep -q "$grepClass"; then
+			char=$(printf '%s' "$char" | tr "$trString1" "$trString2")
+			[ $Debug ] && printf '\n%s at %s <-- To %s' "$char" $pos "$toCase"
+			Password=$(printf '%s' "$Password" \
+				| sed s/./"$char"/$pos)
+			[ $Debug ] && printf '\n%s' "$Password"
 			index=$((index + 1))
-		elif ! printf "%s" "$Password" | grep -q "$grepClass"; then
-			[ $Debug ] && printf "\nAll characters are uppercase\n"
+		elif ! printf '%s' "$Password" | grep -q "$grepClass"; then
+			[ $Debug ] && printf '\nAll characters are uppercase\n'
 			break
 		fi
 	done
 }
 
 # Calculate the amount of uppercase letters:
-UpperCount=$(printf "%s" "$Password" | tr -cd "[:upper:]" | wc -m)
-[ $Debug ] && printf "\nUpper Count: %s" $UpperCount
+UpperCount=$(printf '%s' "$Password" | tr -cd '[:upper:]' | wc -m)
+[ $Debug ] && printf '\nUpper Count: %s' $UpperCount
 
 # Force capitalization when there are no uppercase letters:
 [ $UpperCount -eq 0 ] && [ ! $UnForceUpper ] && ForceUpper=true
-[ $Debug ] && printf "\nForce Upper: %s" $ForceUpper
+[ $Debug ] && printf '\nForce Upper: %s' $ForceUpper
 
 # Capitalize a number of letters:
 change_case_to upper
 
 # Calculate the amount of lowercase letters:
-LowerCount=$(printf "%s" "$Password" | tr -cd "[:lower:]" | wc -m)
-[ $Debug ] && printf "\nLower Count: %s" $LowerCount
+LowerCount=$(printf '%s' "$Password" | tr -cd '[:lower:]' | wc -m)
+[ $Debug ] && printf '\nLower Count: %s' $LowerCount
 
 # Force decapitalization when there are no lowercase letters:
 [ $LowerCount -eq 0 ] && [ ! $UnForceLower ] && ForceLower=true
-[ $Debug ] && printf "\nForce Lower: %s" $ForceLower
+[ $Debug ] && printf '\nForce Lower: %s' $ForceLower
 
 # Decapitalize a number of letters:
 change_case_to lower
 
-[ $Debug ] && printf "\n\nResulting Password:\n%s\n" "$Password"
+[ $Debug ] && printf '\n\nResulting Password:\n%s\n' "$Password"
 
 # Output resulting password:
 if [ $CopyToClipboard ]; then
-	printf "%s" "$Password" | xclip -selection clipboard
+	printf '%s' "$Password" | xclip -selection clipboard
 elif [ ! $Debug ]; then
-	printf "%s" "$Password"
+	printf '%s' "$Password"
 fi
