@@ -2,31 +2,22 @@
 
 # Dmenu for selecting which browser to open.
 
-Browsers="Brave
+Browsers='1. B-Brave
+2. A-Brave
+3. C-Brave
+4. R-Brave
 qutebrowser
-chrome
-B-Brave
-A-Brave
-C-Brave
-R-Brave
-B-Chrome
-A-Chrome
-R-Chrome"
+'
 
-Chosen=$(printf "%s" "$Browsers" \
-	| dmenu -i -l 20 -p "Select browser:")
+Chosen=$(printf '%s' "$Browsers" \
+	| dmenu -i -l 20 -p 'Select browser:')
 [ -z "$Chosen" ] && exit 1
 
 case $Chosen in
-	Brave) brave "$@";;
+	'1. B-Brave') brave --no-sandbox --profile-directory='Profile 1' "$@";;
+	'2. A-Brave') brave --no-sandbox --profile-directory=Default "$@";;
+	'3. C-Brave') brave --no-sandbox --profile-directory='Profile 3' "$@";;
+	'4. R-Brave') brave --no-sandbox --profile-directory='Profile 2' "$@";;
 	qutebrowser) qutebrowser "$@";;
-	Chrome) google-chrome-stable "$@";;
-	B-Brave) brave --profile-directory="Profile 1" "$@";;
-	A-Brave) brave --profile-directory=Default "$@";;
-	C-Brave) brave --profile-directory="Profile 3" "$@";;
-	R-Brave) brave --profile-directory="Profile 2" "$@";;
-	B-Chrome) google-chrome-stable --profile-directory=Default "$@";;
-	A-Chrome) google-chrome-stable --profile-directory="Profile 2" "$@";;
-	R-Chrome) google-chrome-stable --profile-directory="Profile 1" "$@";;
 	*) eval "$Chosen" "$@";;
 esac
