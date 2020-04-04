@@ -25,8 +25,7 @@ rsync -avR \
 	"$HOME/./.config/envvars" \
 	"$HOME/./.local/share/dirmarks" \
 	"$HOME/./.local/share/emoji" \
-	"$HOME/./.inputrc" \
+	"$HOME/./.config/inputrc" \
 	"$HOME/./.xinitrc" \
-	"$HOME/./.Xresources" \
 	"$HOME/./.zprofile" \
 	"$HOME/proj/dotfiles"
