@@ -190,7 +190,7 @@ while [ "$#" -gt 0 ]; do
 			set -- $opts "$@"
 			continue;;
 		-h|--help) printf "%s" "$HelpMessage"; exit 0;;
-		-v|--version) printf "%s" "$HelpMessage"; exit 0;;
+		-v|--version) printf "%s\n" "$Version"; exit 0;;
 		-d|--debug) Debug=true;;
 		-s|--use-source) UseSource=true;;
 		-c|--clipboard) CopyToClipboard=true;;
