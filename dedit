@@ -12,12 +12,12 @@ case $1 in
 		### Could be worth using `-xdev`, to stay on the same filesystem.
 		Files1=$(find "$LBIN" -type l)
 		Files2=$(find "$HOME" "$LSHARE" -maxdepth 1 -type f)
-		Files3=$(find "$HOME/notes" "$XDG_CONFIG_HOME" "$LBIN" -type f)
+		Files3=$(find "$XDG_DOCUMENTS_DIR/notes" "$XDG_CONFIG_HOME" "$LBIN" -type f)
 
 		# Exclude some paths:
 		Files=$(
 			printf "%s\n%s\n%s" "$Files1" "$Files2" "$Files3" | grep -Ev \
-				'.tdb|.sql|dump|eb26f4|google-chrome|VirtualBox|BraveSoftware'
+				'.tdb|.sql|dump|eb26f4|google-chrome|VirtualBox|BraveSoftware|.config/cargo'
 		) ;;
 esac
 
