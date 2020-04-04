@@ -108,7 +108,7 @@ MenuDelete='4. Delete an entry.'
 FullMenu="$MenuCopy\n$MenuCreate\n$MenuEdit\n$MenuDelete"
 
 # Prompt user to choose action:
-ChosenMenu=$(printf '%b' "$FullMenu" | dmenu -i -l 10 -p 'dpass:')
+ChosenMenu=$(printf '%b' "$FullMenu" | dmenu -i -l 10 -p "$ScriptName:")
 
 # Copy selected entry to clipboard:
 if [ "$ChosenMenu" = "$MenuCopy" ]; then
