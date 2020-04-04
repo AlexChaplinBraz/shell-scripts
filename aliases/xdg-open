@@ -12,7 +12,7 @@ case "$1" in
 	*.png|*.jpg|*.jpeg|*.gif)
 		exec $IMAGE_VIEWER "$1"
 		;;
-	*.mp4|*.mov|*.avi|*.wmv|*.flv|*.webm)
+	*.mp4|*.mkv|*.mov|*.avi|*.wmv|*.flv|*.webm)
 		exec $VIDEO_VIEWER "$1"
 		;;
 	*.mp3|*.wav)
