@@ -24,11 +24,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Set default bookmark if there is none:
-BlankMark="---"
-
-ScriptName="${0##*/}"
+ScriptName=${0##*/}
 Version=1.0.0
+
+# Set default bookmark if there is none:
+BlankMark='---'
 
 # Compose the help message:
 HelpMessage="$ScriptName - Version: $Version
@@ -61,80 +61,75 @@ In the case where there's only one program and/or directory, they will be
 selected automatically.
 
 Usage examples:
-	$ScriptName \$HOME vifm,lf,sxiv
-	$ScriptName \ ranger,vifm
-	$ScriptName \"\$HOME/Pictures\" \"sxiv -t,sxiv -arf\"
-	$ScriptName \"\$HOME/Documents/dir-bookmarks.txt\" lf
-	$ScriptName \"\$HOME/Documents/dir-bookmarks.txt\" lf ###
+    $ScriptName \$HOME vifm,lf,sxiv
+    $ScriptName \ ranger,vifm
+    $ScriptName \"\$HOME/Pictures\" \"sxiv -t,sxiv -arf\"
+    $ScriptName \"\$HOME/Documents/dir-bookmarks.txt\" lf
+    $ScriptName \"\$HOME/Documents/dir-bookmarks.txt\" lf ###
 
 Example bookmarks file (keep in mind the tab separation):
 
-\$HOME	HM
-\"\$HOME/Pictures/Art References\"	AR
-\"\$XDG_CONFIG_HOME\"	CNF
-#\$COMMENT	CM	COMMENT: this can be whatever since it's not parsed.
-/mnt	MNT
-/etc	ETC
-/backup	BU
+\$HOME  HM
+\"\$HOME/Pictures/Art References\"  AR
+\"\$XDG_CONFIG_HOME\"   CNF
+#\$COMMENT  CM  COMMENT: this can be whatever since it's not parsed.
+/mnt    MNT
+/etc    ETC
+/backup     BU
 "
 
-suggest_help() {
-	printf "Try '%s --help' for more information.\n" "$ScriptName"
+suggest_help_and_exit() {
+    printf "Try '%s --help' for more information.\n" "$ScriptName"
+    exit 1
 }
 
-# Notify user of how to use the script:
-[ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ] && \
-	printf "%s" "$HelpMessage" && \
-	exit 1
-
-# Print version and exit:
-[ "$1" = "-v" ] || [ "$1" = "--version" ] && \
-	printf "%s - Version: %s\n" "$ScriptName" "$Version" && \
-	exit 1
+case $1 in
+    '') printf '%s' "$HelpMessage"; exit 1;;
+    -h|--help) printf '%s' "$HelpMessage"; exit 0;;
+    -v|--version) printf '%s - Version: %s\n' "$ScriptName" "$Version"; exit 0;;
+esac
 
 # Set custom blank mark if it was set by the user:
-[ "$3" ] && BlankMark="$3"
+[ "$3" ] && BlankMark=$3
 
 # Set a location for the temporary file that holds the found directories:
 TempFile="/tmp/$ScriptName-dirs"
 
 # Set up a function that can be called to run in the background:
 find_directories() {
-	find "$1" -type d 2>/dev/null > "$TempFile"
-	printf "%s" "$ScriptName ENDofSEARCH" >> "$TempFile"
+    find "$1" -type d 2>/dev/null > "$TempFile"
+    printf '%s' "$ScriptName ENDofSEARCH" >> "$TempFile"
 }
 
 # Parse the passed programs:
-Parsed="$(printf "%s" "$2" | tr -s ',' '\n')"
+Parsed=$(printf '%s' "$2" | tr -s ',' '\n')
 
 # Count the amount of programs:
-ProgramAmount=$(printf "%s\n" "$Parsed" | wc -l)
+ProgramAmount=$(printf '%s\n' "$Parsed" | wc -l)
 
 # Determine whether the first argument is a directory or a file:
 if [ -d "$1" ]; then
-	Directory="$1"
-elif [ "$(file -i "$1" | awk '{printf $2}')" = "text/plain;" ]; then
-	cat "$1" | while IFS= read -r line; do
-		line="$(printf "%s" "$line" \
-			| awk -F '\t' -v blank="$BlankMark" \
-			'{print match($2, /[^ ]/) ? $2 : blank, $1}' OFS='\t')"
-		path="$(printf "%s" "$line" | awk -F '\t' '{printf $2}')"
-		eval [ -d "$path" ] 2>/dev/null \
-			&& printf "%s\n" "$line" >> "$TempFile"
-	done
-	if [ ! -s "$TempFile" ]; then
-		printf "ERROR: no valid directories in the specified file.\n"
-		suggest_help
-		exit 1
-	fi
-	[ $ProgramAmount = 1 ] && pn="[$Parsed] "
-	Directory="$(printf "%s" "$(cat "$TempFile")" \
-		| dmenu -i -l 30 -p "${pn}Select parent directory:" \
-		| awk -F '\t' '{printf $2}')"
+    Directory=$1
+elif [ "$(file -i "$1" | awk '{printf $2}')" = 'text/plain;' ]; then
+    cat "$1" | while IFS= read -r line; do
+        line=$(printf '%s' "$line" \
+            | awk -F '\t' -v blank=$BlankMark \
+            '{print match($2, /[^ ]/) ? $2 : blank, $1}' OFS='\t')
+        path=$(printf '%s' "$line" | awk -F '\t' '{printf $2}')
+        eval [ -d "$path" ] 2>/dev/null \
+            && printf '%s\n' "$line" >> "$TempFile"
+    done
+    if [ ! -s "$TempFile" ]; then
+        printf 'ERROR: no valid directories in the specified file.\n'
+        suggest_help_and_exit
+    fi
+    [ $ProgramAmount = 1 ] && pn="[$Parsed] "
+    Directory=$(printf '%s' "$(cat "$TempFile")" \
+        | dmenu -i -l 30 -p "${pn}Select parent directory:" \
+        | awk -F '\t' '{printf $2}')
 else
-	printf "ERROR: invalid first argument.\n"
-	suggest_help
-	exit 1
+    printf 'ERROR: invalid first argument.\n'
+    suggest_help_and_exit
 fi
 
 # Delete the temporary file:
@@ -148,26 +143,26 @@ eval find_directories "$Directory" &
 
 # If there's only one program, skip selecting it:
 if [ $ProgramAmount = 1 ]; then
-	Program="$Parsed"
+    Program=$Parsed
 # Else, select the program first to hide the time taken to find the directories:
 else
-	Program="$(printf "%s" "$Parsed" \
-		| dmenu -i -l 30 -p "Select program:")"
-	[ -z "$Program" ] && exit 1
+    Program=$(printf '%s' "$Parsed" \
+        | dmenu -i -l 30 -p 'Select program:')
+    [ -z "$Program" ] && exit 1
 fi
 
 # Wait until all directories have been found:
 until [ "$(tail -n 1 "$TempFile")" = "$ScriptName ENDofSEARCH" ]; do
-	sleep 0.1
+    sleep 0.1
 done
 
 # If there's only the result of the directory itself, select it:
 if [ $(wc -l "$TempFile" | awk '{printf $1}') = 1 ]; then
-	Chosen="$(sed '$d' "$TempFile")"
+    Chosen=$(sed '$d' "$TempFile")
 # Else, choose a directory:
 else
-	Chosen="$(sed '$d' "$TempFile" \
-		| dmenu -i -l 30 -p "[$Program] Select directory:")"
+    Chosen=$(sed '$d' "$TempFile" \
+        | dmenu -i -l 30 -p "[$Program] Select directory:")
 fi
 
 # Delete the temporary file:

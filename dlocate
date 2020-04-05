@@ -2,9 +2,6 @@
 
 # Dmenu for locating and opening paths.
 
-ScriptName=${0##*/}
-Version=1.0.0
-
 # MIT License
 #
 # Copyright (c) 2020 Alexander Chaplin Braz (http://alexchaplinbraz.com)
@@ -26,6 +23,9 @@ Version=1.0.0
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+ScriptName=${0##*/}
+Version=1.0.0
 
 # Compose the help message:
 HelpMessage="$ScriptName - Version: $Version
@@ -50,20 +50,19 @@ non-specified program with arguments. If one of the dmenu options is still
 selected, SHIFT+ENTER will ignore it and select exactly what you typed.
 
 Examples:
-	$ScriptName vim,vifm,lf,sxiv
-	$ScriptName 'nvim,lf,vifm,sxiv -ta,sxiv -arf'
+    $ScriptName vim,vifm,lf,sxiv
+    $ScriptName 'nvim,lf,vifm,sxiv -ta,sxiv -arf'
 "
 
 # Notify user of how to use the script:
 case $1 in
-	-h|--help)
-		printf '%s' "$HelpMessage"; exit 0 ;;
-	*|'')
-		printf '%s' "$HelpMessage"; exit 1 ;;
+    '') printf '%s' "$HelpMessage"; exit 1;;
+    -h|--help) printf '%s' "$HelpMessage"; exit 0;;
+    -f|--version) printf '%s' "$Version"; exit 0;;
 esac
 
 # Prompt user what to locate:
-LocateTarget=$(printf '' | dmenu -p 'dlocate:')
+LocateTarget=$(printf '' | dmenu -p "$ScriptName:")
 
 # Exit if nothing was selected:
 [ -z "$LocateTarget" ] && exit 1
@@ -82,9 +81,9 @@ Parsed=$(printf '%s' "$1" | tr -s ',' '\n')
 
 # If there's only one program, skip selecting it:
 if [ $(printf '%s\n' "$Parsed" | wc -l) -eq 1 ]; then
-	Program=$Parsed
+    Program=$Parsed
 else # Else, choose one:
-	Program=$(printf '%s' "$Parsed" | dmenu -i -l 10 -p 'Select program:')
+    Program=$(printf '%s' "$Parsed" | dmenu -i -l 10 -p 'Select program:')
 fi
 
 # Exit if nothing was selected:

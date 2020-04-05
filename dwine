@@ -2,17 +2,17 @@
 
 # Dmenu for choosing which wine bottle to open a program with.
 
-Chosen="$(printf "WG32\nWG64" \
-	| dmenu -i -l 10 -p "Select wine bottle to execute program:")"
+Chosen=$(printf 'WG32\nWG64' \
+    | dmenu -i -l 10 -p 'Select wine bottle to execute program:')
 
-if [ "$Chosen" = "WG32" ]; then
-	export WINEARCH=win32
-	export WINEPREFIX=/home/alex/.local/wine/wg32
-	exec wine "$1"
-elif [ "$Chosen" = "WG64" ]; then
-	export WINEARCH=win64
-	export WINEPREFIX=/home/alex/.local/wine/wg64
-	exec wine "$1"
+if [ "$Chosen" = 'WG32' ]; then
+    export WINEARCH='win32'
+    export WINEPREFIX='/home/alex/.local/wine/wg32'
+    exec wine "$1"
+elif [ "$Chosen" = 'WG64' ]; then
+    export WINEARCH='win64'
+    export WINEPREFIX='/home/alex/.local/wine/wg64'
+    exec wine "$1"
 else
-	exit 1
+    exit 1
 fi

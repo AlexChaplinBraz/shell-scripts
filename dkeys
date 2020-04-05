@@ -2,25 +2,27 @@
 
 # Dmenu for disabling/enabling keyboard keys.
 
+ScriptName=${0##*/}
+Version=1.0.0
+
 SuperLDisable='Disable Super_L'
 SuperLEnable='Enable Super_L'
 SuperRDisable='Disable Super_R'
 SuperREnable='Enable Super_R'
 
 KeyState=$(printf '%s\n%s\n%s\n%s' \
-	"$SuperLDisable" \
-	"$SuperLEnable" \
-	"$SuperRDisable" \
-	"$SuperREnable" \
-	| dmenu -i -l 10 -p 'dkeys')
+                  "$SuperLDisable" \
+                  "$SuperLEnable" \
+                  "$SuperRDisable" \
+                  "$SuperREnable" \
+               | dmenu -i -l 10 -p "$ScriptName")
 
 case $KeyState in
-	"$SuperLDisable") Keycode='keycode 133 = 0x0000';;
-	"$SuperLEnable") Keycode='keycode 133 = 0xffeb';;
-	"$SuperRDisable") Keycode='keycode 134 = 0x0000';;
-	"$SuperREnable") Keycode='keycode 134 = 0xffec';;
-	*) exit 1;;
-
+    "$SuperLDisable") Keycode='keycode 133 = 0x0000';;
+    "$SuperLEnable") Keycode='keycode 133 = 0xffeb';;
+    "$SuperRDisable") Keycode='keycode 134 = 0x0000';;
+    "$SuperREnable") Keycode='keycode 134 = 0xffec';;
+    *) exit 1;;
 esac
 
 xmodmap -e "$Keycode"

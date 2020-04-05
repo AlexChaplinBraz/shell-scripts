@@ -27,10 +27,6 @@
 ScriptName=${0##*/}
 Version=1.0.0
 
-TryHelp() { printf "Try '%s --help' for more information.\n" "$ScriptName"; }
-Err() { printf 'ERROR: %s\n' "$1" 1>&2; }
-
-# Compose the help message:
 HelpMessage="$ScriptName - Version: $Version
 Creator: Alexander Chaplin Braz (http://alexchaplinbraz.com)
 License: MIT
@@ -74,23 +70,26 @@ Examples:
 Pro tip:
 You can also pass a command substitution. My favourite is selecting a random
 file to be used as input. For example:
-	export DPASS_OPTS='-Cf \"\$(find \"\$HOME/notes\" -type f | shuf -n1)\"'
+    export DPASS_OPTS='-Cf \"\$(find \"\$HOME/notes\" -type f | shuf -n1)\"'
 Would find all the files insides the notes directory and select a random one
 to be used for your password generation.
 "
 
+error() { printf 'ERROR: %s\n' "$1" 1>&2; }
+
+suggest_help_and_exit() {
+    printf "Try '%s --help' for more information.\n" "$ScriptName";
+    exit 1
+}
+
 case $1 in
-	-h|--help)
-		printf '%s' "$HelpMessage"; exit 0 ;;
-	-v|--version)
-		printf '%s - Version: %s\n' "$ScriptName" "$Version"; exit 1
-	*|'')
-		printf '%s' "$HelpMessage"; exit 1 ;;
+    -h|--help) printf '%s' "$HelpMessage"; exit 0;;
+    -v|--version) printf '%s - Version: %s\n' "$ScriptName" "$Version"; exit 0;;
 esac
 
 if ! command -v genrepass 1> /dev/null 2>&1; then
-	Err "'genrepass' is required for password generation."
-	exit 1
+    error "'genrepass' is required for password generation."
+    suggest_help_and_exit
 fi
 
 # Get the location of the password store:
@@ -112,96 +111,94 @@ ChosenMenu=$(printf '%b' "$FullMenu" | dmenu -i -l 10 -p "$ScriptName:")
 
 # Copy selected entry to clipboard:
 if [ "$ChosenMenu" = "$MenuCopy" ]; then
-	ChosenPass=$(
-		printf '%s' "$PassList" | dmenu -i -l 30 -p 'Select entry to copy:'
-	)
+    ChosenPass=$(
+        printf '%s' "$PassList" | dmenu -i -l 30 -p 'Select entry to copy:'
+    )
 
-	pass show -c "$ChosenPass"
+    pass show -c "$ChosenPass"
 
 # Create new entry/Edit existing entry:
 elif [ "$ChosenMenu" = "$MenuCreate" ]; then
-	ChosenName=$(
-		printf '%s' "$PassList" | dmenu -i -l 30 -p 'Input entry name:'
-	)
+    ChosenName=$(
+        printf '%s' "$PassList" | dmenu -i -l 30 -p 'Input entry name:'
+    )
 
-	[ -z "$ChosenName" ] && exit 1
+    [ -z "$ChosenName" ] && exit 1
 
-	# Set menu options:
-	TypeGenrepass='1. Generate password with genrepass.'
-	TypeSingleLine='2. Write a single line of content.'
+    # Set menu options:
+    TypeGenrepass='1. Generate password with genrepass.'
+    TypeSingleLine='2. Write a single line of content.'
 
-	# Prompt user to choose content type:
-	ChosenType=$(
-		printf '%s\n%s' "$TypeGenrepass" "$TypeSingleLine" \
-			| dmenu -i -l 10 -p 'Select content type:'
-	)
+    # Prompt user to choose content type:
+    ChosenType=$(
+        printf '%s\n%s' "$TypeGenrepass" "$TypeSingleLine" \
+            | dmenu -i -l 10 -p 'Select content type:'
+    )
 
-	# Generate password with genrepass:
-	if [ "$ChosenType" = "$TypeGenrepass" ];then
+    # Generate password with genrepass:
+    if [ "$ChosenType" = "$TypeGenrepass" ];then
 
-		# Set genrepass options:
-		if [ -z "$1" ]; then
-			if [ -n "$DPASS_OPTS" ]; then
-				GRPargs=$DPASS_OPTS
-			else
-				GRPargs='-sC'
-			fi
-		else
-			GRPargs=$1
-		fi
+        # Set genrepass options:
+        if [ -z "$1" ]; then
+            if [ -n "$DPASS_OPTS" ]; then
+                GRPargs=$DPASS_OPTS
+            else
+                GRPargs='-sC'
+            fi
+        else
+            GRPargs=$1
+        fi
 
-		# Keep generating passwords until one is selected:
-		while [ -z "$Content" ]; do
-			Content=$(
-				eval genrepass "$GRPargs" | dmenu -l 10 \
-					-p 'ENTER to select, ESCAPE to generate new password:'
-			)
-		done
+        # Keep generating passwords until one is selected:
+        while [ -z "$Content" ]; do
+            Content=$(
+                eval genrepass "$GRPargs" | dmenu -l 10 \
+                    -p 'ENTER to select, ESCAPE to generate new password:'
+            )
+        done
 
-	# Input custom single line content:
-	elif [ "$ChosenType" = "$TypeSingleLine" ];then
-		Content=$(printf '' | dmenu -p 'Input content:')
+    # Input custom single line content:
+    elif [ "$ChosenType" = "$TypeSingleLine" ];then
+        Content=$(printf '' | dmenu -p 'Input content:')
 
-	elif [ -z "$ChosenType" ];then
-		exit 1
-	else
-		Err 'Invalid selection.'
-		TryHelp
-		exit 1
-	fi
+    elif [ -z "$ChosenType" ];then
+        exit 1
+    else
+        error 'Invalid selection.'
+        suggest_help_and_exit
+    fi
 
-	# Create a preview for the user to see their input:
-	Confirmation=$(
-		printf '%s\nEntry: %s\nContent: %s' \
-			'This is a preview. Press ENTER to confirm or ESCAPE to cancel.' \
-			"$ChosenName" "$Content" | dmenu -i -l 10
-	)
+    # Create a preview for the user to see their input:
+    Confirmation=$(
+        printf '%s\nEntry: %s\nContent: %s' \
+            'This is a preview. Press ENTER to confirm or ESCAPE to cancel.' \
+            "$ChosenName" "$Content" | dmenu -i -l 10
+    )
 
-	# If the user pressed ENTER, create/edit the entry:
-	if [ "$Confirmation" ]; then
-		printf '%s' "$Content" | pass add --echo --force "$ChosenName"
-	fi
+    # If the user pressed ENTER, create/edit the entry:
+    if [ "$Confirmation" ]; then
+        printf '%s' "$Content" | pass add --echo --force "$ChosenName"
+    fi
 
 # Open entry with $EDITOR:
 elif [ "$ChosenMenu" = "$MenuEdit" ]; then
-	ChosenPass=$(
-		printf '%s' "$PassList" | dmenu -i -l 30 -p "Select entry to edit:"
-	)
+    ChosenPass=$(
+        printf '%s' "$PassList" | dmenu -i -l 30 -p "Select entry to edit:"
+    )
 
-	$TERMINAL -e pass edit "$ChosenPass"
+    $TERMINAL -e pass edit "$ChosenPass"
 
 # Delete an entry:
 elif [ "$ChosenMenu" = "$MenuDelete" ]; then
-	ChosenPass=$(
-		printf '%s' "$PassList" | dmenu -i -l 30 -p 'Select entry to delete:'
-	)
+    ChosenPass=$(
+        printf '%s' "$PassList" | dmenu -i -l 30 -p 'Select entry to delete:'
+    )
 
-	pass delete --force "$ChosenPass"
+    pass delete --force "$ChosenPass"
 
 elif [ -z "$ChosenMenu" ]; then
-	exit 1
+    exit 1
 else
-	Err 'Invalid selection.'
-	TryHelp
-	exit 1
+    error 'Invalid selection.'
+    suggest_help_and_exit
 fi

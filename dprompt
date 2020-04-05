@@ -4,6 +4,6 @@
 # Gives a dmenu prompt labled with $1 to perform command $2.
 # Example: dprompt "Suspend?" "sudo systemctl suspend"
 
-[ "$(printf "No\nYes" \
-	| dmenu -p "$1" \
-	-i -nb darkred -sb red -sf black -nf gray)" = "Yes" ] && $2
+[ "$(printf 'No\nYes' \
+    | dmenu -p "$1" \
+    -i -nb darkred -sb red -sf black -nf gray)" = 'Yes' ] && $2
