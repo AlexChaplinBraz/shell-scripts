@@ -2,10 +2,10 @@
 
 # Dmenu for selecting which browser to open.
 
-Browsers='1. B-Brave
-2. A-Brave
-3. C-Brave
-4. R-Brave
+Browsers='1. B
+2. A
+3. C
+4. R
 qutebrowser
 '
 
@@ -14,10 +14,10 @@ Chosen=$(printf '%s' "$Browsers" \
 [ -z "$Chosen" ] && exit 1
 
 case $Chosen in
-	'1. B-Brave') brave --no-sandbox --profile-directory='Profile 1' "$@";;
-	'2. A-Brave') brave --no-sandbox --profile-directory=Default "$@";;
-	'3. C-Brave') brave --no-sandbox --profile-directory='Profile 3' "$@";;
-	'4. R-Brave') brave --no-sandbox --profile-directory='Profile 2' "$@";;
+	'1. B') brave --no-sandbox --profile-directory='Profile 1' "$@";;
+	'2. A') brave --no-sandbox --profile-directory=Default "$@";;
+	'3. C') brave --no-sandbox --profile-directory='Profile 3' "$@";;
+	'4. R') brave --no-sandbox --profile-directory='Profile 2' "$@";;
 	qutebrowser) qutebrowser "$@";;
 	*) eval "$Chosen" "$@";;
 esac
