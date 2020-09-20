@@ -6,7 +6,7 @@ ScriptName=${0##*/}
 Version=1.0.1
 
 HelpMessage="$ScriptName - Version: $Version
-Creator: Alexander Chaplin Braz (http://alexchaplinbraz.com)
+Creator: Alexander Chaplin Braz (https://alexchaplinbraz.com)
 License: MIT
 
 This script links all the executable files inside one directory into another
