@@ -14,7 +14,7 @@
 
 # MIT License
 #
-# Copyright (c) 2020 Alexander Chaplin Braz (http://alexchaplinbraz.com)
+# Copyright (c) 2020 Alexander Chaplin Braz
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +66,7 @@ suggest_help_and_exit() {
 }
 
 HelpMessage="$ScriptName - Version: $Version
-Creator: Alexander Chaplin Braz (http://alexchaplinbraz.com)
+Creator: Alexander Chaplin Braz (https://alexchaplinbraz.com)
 License: MIT
 
 Usage:
