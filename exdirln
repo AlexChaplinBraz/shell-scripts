@@ -39,7 +39,7 @@ if [ -z "$1" ]; then
 elif [ "$1" = '-c' ]; then
     SourceDir=$(pwd)
 elif [ -d "$1" ]; then
-    SourceDir=$(printf '%s' "$1" | sed 's/\/$//')
+    SourceDir=$(printf '%s' "$1" | sed 's|/$||')
 else
     error 'invalid source directory.'
 fi
@@ -47,9 +47,9 @@ fi
 if [ -z "$2" ]; then
     error 'a target directory is required.'
 elif [ "$2" = '-b' ]; then
-    TargetDir=$(printf '%s' "$LBIN" | sed 's/\/$//')
+    TargetDir=$(printf '%s' "$LBIN" | sed 's|/$||')
 elif [ -d "$2" ]; then
-    TargetDir=$(printf '%s' "$2" | sed 's/\/$//')
+    TargetDir=$(printf '%s' "$2" | sed 's|/$||')
 else
     error 'invalid target directory.'
 fi
