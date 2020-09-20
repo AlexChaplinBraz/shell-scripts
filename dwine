@@ -2,17 +2,40 @@
 
 # Dmenu for choosing which wine bottle to open a program with.
 
-Chosen=$(printf 'WG32\nWG64' \
-    | dmenu -i -l 10 -p 'Select wine bottle to execute program:')
-
-if [ "$Chosen" = 'WG32' ]; then
+if [ "$2" = 'wg32' ]; then
     export WINEARCH='win32'
     export WINEPREFIX='/home/alex/.local/wine/wg32'
     exec wine "$1"
-elif [ "$Chosen" = 'WG64' ]; then
+    exit 0
+fi
+
+Chosen=$(printf '1. Run with WG32\n2. Run with WG64\n3. winetricks WG32\n4. winetricks WG64\n5. winecfg WG32\n6. winecfg WG64' \
+    | dmenu -i -l 10 -p 'dwine:')
+
+if [ "$Chosen" = '1. Run with WG32' ]; then
+    export WINEARCH='win32'
+    export WINEPREFIX='/home/alex/.local/wine/wg32'
+    exec wine "$1"
+elif [ "$Chosen" = '2. Run with WG64' ]; then
     export WINEARCH='win64'
     export WINEPREFIX='/home/alex/.local/wine/wg64'
     exec wine "$1"
+elif [ "$Chosen" = '3. winetricks WG32' ]; then
+    export WINEARCH='win32'
+    export WINEPREFIX='/home/alex/.local/wine/wg32'
+    exec winetricks
+elif [ "$Chosen" = '4. winetricks WG64' ]; then
+    export WINEARCH='win64'
+    export WINEPREFIX='/home/alex/.local/wine/wg64'
+    exec winetricks
+elif [ "$Chosen" = '5. winecfg WG32' ]; then
+    export WINEARCH='win32'
+    export WINEPREFIX='/home/alex/.local/wine/wg32'
+    exec winecfg
+elif [ "$Chosen" = '6. winecfg WG64' ]; then
+    export WINEARCH='win64'
+    export WINEPREFIX='/home/alex/.local/wine/wg64'
+    exec winecfg
 else
     exit 1
 fi
