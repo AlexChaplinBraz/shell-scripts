@@ -65,6 +65,12 @@ single argument pointing to a WAV file for a sound alert. I use it for quickly
 starting a short timer whenever I put something on the stove. I've burned a few
 meals and pans before this script...
 
+### dpower
+
+A power menu with confirmation prompts using dprompt. This way I only need to
+bind one key for power options. It doesn't matter that it adds one more step,
+since these aren't engaged that often.
+
 ### dbrowsel
 
 Select a browser to open a URL with. Can be exported to $BROWSER and be used

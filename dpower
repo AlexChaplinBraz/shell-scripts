@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+
+# Dmenu power menu.
+# Uses dprompt for confirmation.
+
+Menu='Hybrid-sleep
+Power Off
+Reboot
+Suspend
+Hibernate'
+
+Chosen=$(printf "$Menu" | dmenu -i -l 10 -p 'dpower')
+
+if [ "$Chosen" = 'Hybrid-sleep' ]; then
+    dprompt "Confirm $Chosen?" 'systemctl hybrid-sleep'
+elif [ "$Chosen" = 'Power Off' ]; then
+    dprompt "Confirm $Chosen?" 'poweroff'
+elif [ "$Chosen" = 'Restart' ]; then
+    dprompt "Confirm $Chosen?" 'reboot'
+elif [ "$Chosen" = 'Suspend' ]; then
+    dprompt "Confirm $Chosen?" 'systemctl suspend'
+elif [ "$Chosen" = 'Hibernate' ]; then
+    dprompt "Confirm $Chosen?" 'systemctl hibernate'
+else
+    exit 1
+fi
