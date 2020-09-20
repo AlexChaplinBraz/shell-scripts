@@ -2,22 +2,19 @@
 
 # Dmenu for selecting which browser to open.
 
-Browsers='1. B
-2. A
-3. C
-4. R
-qutebrowser
-'
+Browsers='1. AC
+2. ACB
+3. CB
+4. O'
 
 Chosen=$(printf '%s' "$Browsers" \
 	| dmenu -i -l 20 -p 'Select browser:')
 [ -z "$Chosen" ] && exit 1
 
 case $Chosen in
-	'1. B') brave --no-sandbox --profile-directory='Profile 1' "$@";;
-	'2. A') brave --no-sandbox --profile-directory=Default "$@";;
-	'3. C') brave --no-sandbox --profile-directory='Profile 3' "$@";;
-	'4. R') brave --no-sandbox --profile-directory='Profile 2' "$@";;
-	qutebrowser) qutebrowser "$@";;
+	'1. AC') firefox -P AC "$@";;
+	'2. ACB') firefox -P ACB "$@";;
+	'3. CB') firefox -P CB "$@";;
+	'4. O') firefox -P O "$@";;
 	*) eval "$Chosen" "$@";;
 esac
