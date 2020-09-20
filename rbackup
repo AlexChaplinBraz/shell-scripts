@@ -2,20 +2,39 @@
 
 # Rsync wrapper for backing up $HOME with dated, incremental versioning.
 
-Versioning="/backup/home/versioning/$(date +'%Y-%m-%d.%H-%M-%S')"
-mkdir "$Versioning"
-sudo rsync -abv --progress \
-     --backup-dir="$Versioning" --delete \
-     --exclude='.cache/' \
-     --exclude='.config/google-chrome/' \
-     --exclude='.config/BraveSoftware/' \
-     --exclude='.local/opt/' \
-     --exclude='.local/share/vbvms/' \
-     --exclude='.local/share/qutebrowser/' \
-     --exclude='.local/share/vifm/Trash/' \
-     --exclude='.local/share/xorg/' \
-     --exclude='.local/src/blender-git/' \
-     --exclude='.local/src/blender_docs/' \
-     --exclude='down/' \
-     "$HOME/" \
-     '/backup/home/alex'
+case $1 in
+    yes) RunRsync=true;;
+    '') printf 'Execute backup (y/n)? '
+        OldSTTYcfg=$(stty -g)
+        stty raw -echo ; answer=$(head -c 1) ; stty "$OldSTTYcfg"
+        if printf '%s' "$answer" | grep -iq "^y" ; then
+            printf 'Yes\n'
+            RunRsync=true
+        else
+            printf 'No\n'
+            exit 0
+        fi;;
+    *) printf "ERROR: wrong argument. Expected argument is 'yes'.\n"
+       exit 1;;
+esac
+
+if [ "$RunRsync" ]; then
+    Versioning="/backup/home/versioning/$(date +'%Y-%m-%d.%H-%M-%S')"
+    mkdir "$Versioning"
+    sudo rsync -abv --progress \
+         --backup-dir="$Versioning" --delete \
+         --exclude='.cache/' \
+         --exclude='.config/google-chrome/' \
+         --exclude='.config/BraveSoftware/' \
+         --exclude='.local/opt/' \
+         --exclude='.local/share/vbvms/' \
+         --exclude='.local/share/qutebrowser/' \
+         --exclude='.local/share/vifm/Trash/' \
+         --exclude='.local/share/xorg/' \
+         --exclude='.local/src/blender-git/' \
+         --exclude='.local/src/blender_docs/' \
+         --exclude='.local/virtual-machines/' \
+         --exclude='down/' \
+         "$HOME/" \
+         '/backup/home/alex'
+fi
