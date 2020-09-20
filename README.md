@@ -57,6 +57,14 @@ Based on dbuku but is even better. It can also get the URL and title of the
 active window if it is one of: qutebrowser, Chrome, Brave or Chromium,
 but it also gives you the ability to edit or delete a bookmark.
 
+### dtimer
+
+A simple timer that prompts you for the time (in `sleep` format) to wait to
+display a TIME'S UP dmenu "listing" with the name you gave it. Can take one
+single argument pointing to a WAV file for a sound alert. I use it for quickly
+starting a short timer whenever I put something on the stove. I've burned a few
+meals and pans before this script...
+
 ### dbrowsel
 
 Select a browser to open a URL with. Can be exported to $BROWSER and be used
