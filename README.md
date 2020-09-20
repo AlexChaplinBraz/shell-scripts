@@ -1,5 +1,12 @@
 # Readable Password Generator
 
+NOTE: This is the shell script version of
+[genrepass](https://github.com/AlexChaplinBraz/genrepass).
+Or more specifically, that Rust port was written based on this script.
+For actual use the Rust version is preferred, since it's what'll receive
+updates if needed, but this script still exists for perusal for those
+interested in shell scripting.
+
 Extracts words in order from a selected file and inserts special characters
 at random places to **gen**erate a **re**adable **pass**word.
 
