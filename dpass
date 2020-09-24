@@ -25,30 +25,32 @@
 # SOFTWARE.
 
 ScriptName=${0##*/}
-Version=1.0.0
+Version=1.1.0
 
 HelpMessage="$ScriptName - Version: $Version
 Creator: Alexander Chaplin Braz (https://alexchaplinbraz.com)
 License: MIT
 
-Usage: $ScriptName ['genrepass options']
+Usage: $ScriptName ['genrepass arguments']
 
 This script lets the user copy, add, edit and delete pass entries through a
 series of dmenu prompts.
 
 The script itself requires no arguments, but does require the user to have the
 complimentary genrepass utility by the same creator for password generation.
+In the case of its absense, the password generation simply won't work and the
+user will have to input them manually.
 
-The default options for genrepass are:
-'-s' to use its own source code as file input
-'-C' to capitalize each word for better readability
+The default argument for genrepass is just to look for text files in the XGD
+environment variable for documents \$XDG_DOCUMENTS_DIR without any options,
 but the user can override that by passing them as the first argument. Do make
 sure to quote the whole block of options and arguments that you would normally
 pass to genrepass with single quotes.
 
 Another way to set the options is to export an environment variable named
 DPASS_OPTS, which takes the same format. This way you can simply run
-$ScriptName without any options.
+$ScriptName without any options. Directly passed arguments still take
+preference though.
 
 IMPORTANT: avoid using the '-c' for copying to clipboard because this script
            is set up in a way that pipes the stdout of genrepass into dmenu for
@@ -61,18 +63,9 @@ I personally recommend pinentry-dmenu to keep with the dmenu theme.
 The editor is taken from \$EDITOR as used by pass.
 
 Examples:
-    $ScriptName '-tCf \"\$HOME/Documents/Journal-2020.md\"'
-    $ScriptName '-s --min-pass-len 30 --max-pass-len 50 --num-amount 10'
-
-    export PASS_OPTS='-tCf \"\$HOME/Documents/Journal-2020.md\"'
-    $ScriptName
-
-Pro tip:
-You can also pass a command substitution. My favourite is selecting a random
-file to be used as input. For example:
-    export DPASS_OPTS='-Cf \"\$(find \"\$HOME/notes\" -type f | shuf -n1)\"'
-Would find all the files insides the notes directory and select a random one
-to be used for your password generation.
+    $ScriptName '-C \"\$HOME/Documents/Journal-2020.md\"'
+    $ScriptName '-L30-50 -n10 \"\$HOME/Documents/notes/\"'
+    export DPASS_OPTS='-C \"\$HOME/Documents/notes\"'
 "
 
 error() { printf 'ERROR: %s\n' "$1" 1>&2; }
@@ -86,11 +79,6 @@ case $1 in
     -h|--help) printf '%s' "$HelpMessage"; exit 0;;
     -v|--version) printf '%s - Version: %s\n' "$ScriptName" "$Version"; exit 0;;
 esac
-
-if ! command -v genrepass 1> /dev/null 2>&1; then
-    error "'genrepass' is required for password generation."
-    suggest_help_and_exit
-fi
 
 # Get the location of the password store:
 PWStore=$PASSWORD_STORE_DIR
@@ -125,13 +113,17 @@ elif [ "$ChosenMenu" = "$MenuCreate" ]; then
 
     [ -z "$ChosenName" ] && exit 1
 
+    if ! command -v genrepass 1> /dev/null 2>&1; then
+        GenrepassNotFound="ERROR: 'genrepass' not found in PATH."
+    fi
+
     # Set menu options:
-    TypeGenrepass='1. Generate password with genrepass.'
-    TypeSingleLine='2. Write a single line of content.'
+    TypeSingleLine='1. Write a single line of content.'
+    TypeGenrepass="2. Generate password with genrepass. $GenrepassNotFound"
 
     # Prompt user to choose content type:
     ChosenType=$(
-        printf '%s\n%s' "$TypeGenrepass" "$TypeSingleLine" \
+        printf '%s\n%s' "$TypeSingleLine" "$TypeGenrepass"  \
             | dmenu -i -l 10 -p 'Select content type:'
     )
 
@@ -143,19 +135,24 @@ elif [ "$ChosenMenu" = "$MenuCreate" ]; then
             if [ -n "$DPASS_OPTS" ]; then
                 GRPargs=$DPASS_OPTS
             else
-                GRPargs='-sC'
+                GRPargs=$XDG_DOCUMENTS_DIR
             fi
         else
             GRPargs=$1
         fi
 
-        # Keep generating passwords until one is selected:
-        while [ -z "$Content" ]; do
-            Content=$(
-                eval genrepass "$GRPargs" | dmenu -l 10 \
-                    -p 'ENTER to select, ESCAPE to generate new password:'
-            )
-        done
+        if [ -z "$GenrepassNotFound" ]; then
+
+            # Keep generating passwords until one is selected:
+            while [ -z "$Content" ]; do
+                Content=$(
+                    eval genrepass "$GRPargs" | dmenu -l 10 \
+                        -p 'ENTER to select, ESCAPE to generate new password:'
+                )
+            done
+        else
+            Content=$(printf '' | dmenu -p 'Input content:')
+        fi
 
     # Input custom single line content:
     elif [ "$ChosenType" = "$TypeSingleLine" ];then
