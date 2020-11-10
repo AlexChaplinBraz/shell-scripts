@@ -1,7 +1,7 @@
 # Readable Password Generator
 
 NOTE: This is the shell script version of
-[genrepass](https://github.com/AlexChaplinBraz/genrepass).
+[genrepass-cli](https://github.com/AlexChaplinBraz/genrepass-cli).
 Or more specifically, that Rust port was written based on this script.
 For actual use the Rust version is preferred, since it's what'll receive
 updates if needed, but this script still exists for perusal for those
