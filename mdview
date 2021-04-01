@@ -1,5 +1,0 @@
-#!/usr/bin/env sh
-
-# Color pager for markdown files.
-
-glow -s dark "$@" | less -r
