@@ -1,7 +1,0 @@
-#!/usr/bin/env sh
-
-# Script for showing the weather.
-
-curl wttr.in
-
-### Can probably be improved a lot, but I don't care about weather anyway.
