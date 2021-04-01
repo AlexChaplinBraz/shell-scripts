@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+# Pseudo alias for wget to store its .wget-hsts file elsewhere.
+
+export PATH=$DEFAULT_PATH
+exec wget --hsts-file="$XDG_CONFIG_HOME/wget-hsts" "$@"
+
