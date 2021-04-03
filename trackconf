@@ -1,0 +1,118 @@
+#!/usr/bin/env sh
+
+# Easily manage a dotfiles repository with symlinks.
+
+ScriptName=${0##*/}
+Version=1.0.0
+Deps='ranger rsync'
+
+EnvDotfilesVar=$(printf '%s_DOTFILES' "$ScriptName" | tr '[a-z]' '[A-Z]')
+EnvDotfilesValue=$(eval printf '%s' \"\$$EnvDotfilesVar\")
+Dotfiles=$EnvDotfilesValue
+
+EnvSelectedFilesVar=$(printf '%s_TEMP' "$ScriptName" | tr '[a-z]' '[A-Z]')
+EnvSelectedFilesValue=$(eval printf '%s' \"\$$EnvSelectedFilesVar\")
+SelectedFiles=${EnvSelectedFilesValue:-/tmp/$ScriptName}
+
+[ "$EnvDotfilesValue" ] && DotfilesStatus="Currently: \033[1;34m$EnvDotfilesVar\033[0m=$Dotfiles" || \
+    DotfilesStatus="Currently \033[1;34m$EnvDotfilesVar\033[0m is not set."
+
+[ "$EnvSelectedFilesValue" ] && SelectedFilesStatus="Currently: \033[1;34m$EnvSelectedFilesVar\033[0m=$SelectedFiles" || \
+    SelectedFilesStatus="Currently \033[1;34m$EnvSelectedFilesVar\033[0m is not set."
+
+HelpMessage="\033[32m$ScriptName\033[0m $Version
+Alexander Chaplin Braz <contact@alexchaplinbraz.com>
+
+Easily manage a dotfiles repository with symlinks.
+
+Must set dotfiles directory with \033[1;34m$EnvDotfilesVar\033[0m.
+$DotfilesStatus
+
+Can set temp file with \033[1;34m$EnvSelectedFilesVar\033[0m, but if not set
+it defaults to: /tmp/$ScriptName
+$SelectedFilesStatus
+
+\033[33mUSAGE:\033[0m
+    $ScriptName <COMMAND>
+    $ScriptName [FLAG]
+
+\033[33mFLAGS:\033[0m
+    \033[32m-h\033[0m, \033[32m--help\033[0m       Print help and exit.
+    \033[32m-v\033[0m, \033[32m--version\033[0m    Print version and exit.
+
+\033[33mCOMMANDS:\033[0m
+    \033[32madd\033[0m        Opens 'ranger' in the current directory and lets you select files
+               that will be copied to the dotfiles repo, preserving the
+               directory structure. This is useful for backing up configs of
+               programs you're uninstalling.
+    \033[32mdeploy\033[0m     Opens 'ranger' in the directory of the dotfiles and links the
+               selected files to where they belong, creating any missing
+               directories. This assumes all selected files are from inside the
+               dotfiles repository, so it shouldn't be used for external files.
+               Deploying directories is somewhat supported if the directory
+               doesn't already exist. But this should be avoided unless every
+               single file inside that directory is going to be tracked. And
+               it's also a bit clunky since you need to Enter on a file to
+               finalise selection.
+    \033[32mhelp\033[0m       Print help and exit.
+    \033[32mlink\033[0m       Same as 'add' but with the newly added files symlinked back into
+               the place they belonged making it effortless to track configs.
+    \033[32mversion\033[0m    Print version and exit.
+
+\033[33mDEPENDENCIES:\033[0m
+    $Deps
+"
+
+error() {
+    printf "\033[1;31m${2:-ERROR}\033[0m: %s.\nTry '%s --help' for more information.\n" \
+        "$1" "$ScriptName" 1>&2
+    exit 1
+}
+
+case $1 in
+    -h|--help|h|he|hel|help|'') printf '%b' "$HelpMessage"; exit 0 ;;
+    -v|--version|v|ve|ver|vers|versi|versio|version) printf '%s\n' "$Version"; exit 0 ;;
+    d|de|dep|depl|deplo|deploy) Deploy=true ;;
+    a|ad|add) Add=true ;;
+    l|li|lin|link) Link=true ;;
+    *) error "unknown argument '$1'" ;;
+esac
+
+for dep in $Deps; do ! command -v $dep 1>/dev/null && MissingDeps="$MissingDeps $dep"; done
+[ "$MissingDeps" ] && error "missing dependencies:$MissingDeps"
+
+[ -z "$Dotfiles" ] && error "must have '$EnvDotfilesVar' set to dotfiles directory"
+[ ! -d "$Dotfiles" ] && error "'$Dotfiles' is not a valid directory"
+
+if [ $Deploy ]; then
+    ranger --choosefiles="$SelectedFiles" --cmd='set show_hidden true' $Dotfiles
+    [ -e "$SelectedFiles" ] || exit 0
+
+    IFS=${IFS#??}
+    for line in $(cat "$SelectedFiles"); do
+        FilePath=$(printf '%s' $line | sed "s|${Dotfiles}/||")
+        mkdir -p ${line%/*}
+        ln -vsfnT "$line" ~/"$FilePath"
+    done
+elif [ $Add ]; then
+    ranger --choosefiles="$SelectedFiles" --cmd='set show_hidden true'
+    [ -e "$SelectedFiles" ] || exit 0
+
+    Files=$(sed "s|/|/./|3;s|^|'|;s|$|'|" "$SelectedFiles" | tr '\n' ' ')
+    eval rsync -avR --no-links "$Files" "$Dotfiles"
+elif [ $Link ]; then
+    ranger --choosefiles="$SelectedFiles" --cmd='set show_hidden true'
+    [ -e "$SelectedFiles" ] || exit 0
+
+    Files=$(sed "s|/|/./|3;s|^|'|;s|$|'|" "$SelectedFiles" | tr '\n' ' ')
+    eval rsync -avR --no-links "$Files" "$Dotfiles"
+
+    IFS=${IFS#??}
+    for line in $(cat "$SelectedFiles"); do
+        FilePath=$(printf '%s' $line | sed "s|${HOME}/||")
+        ln -vsfnT "$Dotfiles"/"$FilePath" ~/"$FilePath"
+    done
+fi
+
+rm "$SelectedFiles" 2>/dev/null
+
