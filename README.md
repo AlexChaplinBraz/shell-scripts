@@ -1,47 +1,71 @@
-# Minor scripts
+# Shell scripts
 
-These are short scripts that help do something specific. Take a look,
-download them and edit them to suit your needs if needed.
+These shell scripts are written to be as POSIX compliant as possible, and as such, POSIX dependencies are assumed to
+exist on the system. Otherwise, each script checks by itself if its dependencies are accessible and informs the user if
+they are not.
 
-Keep in mind that some scripts use 'sudo' to run some commands,
-which would require you to have it set-up in a way that lets you run sudo
-without a password, or to have a pop-up window to ask for it.
+The help and error messages are colourised with ANSI codes (SRG), and if a program requires to be run as root it will be
+informed to the user. Configuration is handled through environment variables and somethimes config files.
 
-## Scripts of note
+### newsh
 
-Some highlights that I consider useful by themselves.
+Creates an executable script linked to local bin from a template with lots of useful features and opens it with your
+EDITOR. This template is used to set a standard of how my scripts should look and behave.
 
-### exdirln
+### trackconf
 
-Link all executables inside one directory into another. I use this all the time
-to re-link the scripts into my local bin directory. In fact there are options
-for that. Read '--help' for more information.
+Great way to manage a dotfiles repository. Makes use of `ranger`'s file selection feature to add config files to the
+dotfiles repository, symlinking them back to where they belonged. Also allows for deploying configs by essentially
+doing the opposite and symlinking the selected configs from inside the dotfiles repo to where they would belong,
+creating any missing directories.
 
-### fixwintrans
+### rbackup
 
-Windows is crap and so is the way permissions get set when transferring from it.
-Run this script from the current directory to fix all file and directory
-permissions recursively. This is important because you shouldn't have files
-with 777 permissions all over the place.
+A fairly great backup solution that allows one to configure multiple `rsync` transfers that run in series. Has support
+for dated versioning and an exclusions file for each backup. Also handles remote servers by checking connectivity before
+syncing. If unavailable, it's skipped and the next backup starts. Same for errors with the configuration. Additionally,
+supports logging the output of the script.
 
-CAUTION: be careful where you run it, since you could screw your system up
-royally. Not unfixable, but really troublesome.
+### linkto
 
-## "Aliases"
+Easy way to symlink selected files with `ranger` into the specified directory. Mainly used to link scripts into local
+bin.
 
-These are scripts that I use to set some default options for programs.
-I'm doing it this way because shell aliases can't be called from sxhkd.
+### saveinstalled
 
-This is achieved by having my local bin first in my $PATH. But for it to not
-enter an infinite loop you have to restore the normal path from within the
-"alias". I use it mostly for setting configuration files to be elsewhere
-when the program doesn't use an environment variable for that. I also have
-my own version of xdg-open, which I find easier to configure.
+Save lists of explicitly installed official and AUR pacman packages. Can also save a custom list based on the
+directories inside the specified directory. Useful for packages that have been installed from source.
 
-By the way, is there an official name for this technique? I'm calling it
-"alias" because that's what it basically is, but I feel like there's a proper
-name for it. Contact me if you know.
+### lndirex
+
+Symlink all the executable files inside one directory into another one, replacing any existing links. Precursor to
+`linkto`, but still somewhat useful.
+
+### upmir
+
+Update pacman's mirrorlist, ranked by speed. Must be run as root.
+
+### rex
+
+Show colourised rustc error message explanation in a pager.
+
+### ex
+
+General extraction helper.
+
+### fixwinperms
+
+Windows is crap and so is the way permissions get set when transferring from it. This script fixes permissions
+recursively on files and directories by setting them to 644 and 775 respectively. This is important because you
+shouldn't have files with 777 permissions all over the place.
+
+CAUTION: careful where you run it, since you could screw your system up royally. Not unfixable, but really troublesome.
+
+### checkvdur
+
+Check total duration of all videos of the same extension inside the current directory.
 
 ## Legal
 
 MIT License.
+
