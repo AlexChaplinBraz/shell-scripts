@@ -3,7 +3,7 @@
 # A fairly great backup solution.
 
 ScriptName=${0##*/}
-Version=1.0.0
+Version=1.0.1
 Deps='rsync timeout ping'
 
 EnvConfigFileVar=$(printf '%s_CONFIG' "$ScriptName" | tr '[a-z]' '[A-Z]')
@@ -36,7 +36,7 @@ $ConfigFileStatus
     $ScriptName [PATH]
 
 \033[33mFLAGS:\033[0m
-    \033[32m-c\033[0m, \033[32m--create-config\033[0m     Create a template config.
+    \033[32m-c\033[0m, \033[32m--create-config\033[0m     Create template config. Overwrites existing config.
     \033[32m-h\033[0m, \033[32m--help\033[0m              Print help and exit.
     \033[32m-p\033[0m, \033[32m--print-template\033[0m    Print the template config to stdout.
     \033[32m-v\033[0m, \033[32m--version\033[0m           Print version and exit.
@@ -116,6 +116,8 @@ error() {
     exit 1
 }
 
+info() { printf "\033[1;34m${2:-INFO}\033[0m: %s.\n" "$1" 1>&2; }
+
 error_loop() { printf "\033[1;31m${2:-ERROR}\033[0m: %s.\n" "$1" 1>&2; }
 
 cannot_connect_to() {
@@ -133,7 +135,8 @@ case $1 in
     -c|--create-config)
         mkdir -p "${ConfigFile%/*}"
         printf '%s' "$ConfigTemplate" > "$ConfigFile"
-        printf "Template config created at '$ConfigFile'.\nRead it for instructions on how to set everything up."
+        info "template config created at '$ConfigFile'"
+        printf 'Read it for instructions on how to set everything up.\n'
         exit 0 ;;
     -p|--print-template) printf '%s' "$ConfigTemplate"; exit 0 ;;
     '') ;;
