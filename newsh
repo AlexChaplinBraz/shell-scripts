@@ -3,7 +3,7 @@
 # Quickly start creating a new shell script.
 
 ScriptName=${0##*/}
-Version=1.0.0
+Version=1.0.1
 Deps=fzf
 
 ProjectsDir=${PROJECTS_DIR:-.}
@@ -13,7 +13,7 @@ EnvCreatorNameVar=$(printf '%s_NAME' "$ScriptName" | tr '[a-z]' '[A-Z]')
 EnvCreatorNameValue=$(eval printf '%s' \"\$$EnvCreatorNameVar\")
 CreatorName=${EnvCreatorNameValue:-'John Doe'}
 
-EnvCreatorEmailVar=$(printf '%s_WEBSITE' "$ScriptName" | tr '[a-z]' '[A-Z]')
+EnvCreatorEmailVar=$(printf '%s_EMAIL' "$ScriptName" | tr '[a-z]' '[A-Z]')
 EnvCreatorEmailValue=$(eval printf '%s' \"\$$EnvCreatorEmailVar\")
 CreatorEmail=${EnvCreatorEmailValue:-'john@doe.email'}
 
@@ -55,7 +55,7 @@ Can set the name of the creator with \033[1;34m$EnvCreatorNameVar\033[0m, but if
 it defaults to a placeholder.
 $CreatorNameStatus
 
-Can set the website of the creator with \033[1;34m$EnvCreatorEmailVar\033[0m, but if not set
+Can set the email of the creator with \033[1;34m$EnvCreatorEmailVar\033[0m, but if not set
 it defaults to a placeholder.
 $CreatorEmailStatus
 
