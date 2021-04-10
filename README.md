@@ -31,6 +31,11 @@ supports logging the output of the script.
 Easy way to symlink selected files with `ranger` into the specified directory. Mainly used to link scripts into local
 bin.
 
+### quickedit
+
+Quickly find and open files to edit. By default uses `fzf` for displaying found files, but can alternatively use
+`dmenu`.
+
 ### saveinstalled
 
 Save lists of explicitly installed official and AUR pacman packages. Can also save a custom list based on the
