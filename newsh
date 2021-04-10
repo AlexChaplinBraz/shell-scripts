@@ -17,19 +17,19 @@ EnvCreatorEmailVar=$(printf '%s_EMAIL' "$ScriptName" | tr '[a-z]' '[A-Z]')
 EnvCreatorEmailValue=$(eval printf '%s' \"\$$EnvCreatorEmailVar\")
 CreatorEmail=${EnvCreatorEmailValue:-'john@doe.email'}
 
-[ "$PROJECTS_DIR" ] && ProjectsDirStatus="Currently: \033[1;34mPROJECTS_DIR\033[0m=$PROJECTS_DIR" || \
+[ "$PROJECTS_DIR" ] && ProjectsDirStatus="Currently \033[1;34mPROJECTS_DIR\033[0m=$PROJECTS_DIR" || \
     ProjectsDirStatus='Currently \033[1;34mPROJECTS_DIR\033[0m is not set.'
 
-[ "$LOCAL_BIN" ] && LocalBinStatus="Currently: \033[1;34mLOCAL_BIN\033[0m=$LOCAL_BIN" || \
+[ "$LOCAL_BIN" ] && LocalBinStatus="Currently \033[1;34mLOCAL_BIN\033[0m=$LOCAL_BIN" || \
     LocalBinStatus='Currently \033[1;34mLOCAL_BIN\033[0m is not set.'
 
-[ "$EDITOR" ] && EditorStatus="Currently: \033[1;34mEDITOR\033[0m=$EDITOR" || \
+[ "$EDITOR" ] && EditorStatus="Currently \033[1;34mEDITOR\033[0m=$EDITOR" || \
     EditorStatus='Currently \033[1;34mEDITOR\033[0m is not set.'
 
-[ "$EnvCreatorNameValue" ] && CreatorNameStatus="Currently: \033[1;34m$EnvCreatorNameVar\033[0m=$CreatorName" || \
+[ "$EnvCreatorNameValue" ] && CreatorNameStatus="Currently \033[1;34m$EnvCreatorNameVar\033[0m=$CreatorName" || \
     CreatorNameStatus="Currently \033[1;34m$EnvCreatorNameVar\033[0m is not set."
 
-[ "$EnvCreatorEmailValue" ] && CreatorEmailStatus="Currently: \033[1;34m$EnvCreatorEmailVar\033[0m=$CreatorEmail" || \
+[ "$EnvCreatorEmailValue" ] && CreatorEmailStatus="Currently \033[1;34m$EnvCreatorEmailVar\033[0m=$CreatorEmail" || \
     CreatorEmailStatus="Currently \033[1;34m$EnvCreatorEmailVar\033[0m is not set."
 
 HelpMessage="\033[32m$ScriptName\033[0m $Version
@@ -114,7 +114,7 @@ Deps=''
 SimpleExample=\${SIMPLE_EXAMPLE:-\$HOME/example}
 
 # Simple way for notifying the user of the state of the environment variables inside the help message.
-[ \"\$SIMPLE_EXAMPLE\" ] && SimpleExampleStatus=\"Currently: \033[1;34mSIMPLE_EXAMPLE\033[0m=\$SIMPLE_EXAMPLE\" || \\
+[ \"\$SIMPLE_EXAMPLE\" ] && SimpleExampleStatus=\"Currently \033[1;34mSIMPLE_EXAMPLE\033[0m=\$SIMPLE_EXAMPLE\" || \\
     SimpleExampleStatus='Currently \033[1;34mSIMPLE_EXAMPLE\033[0m is not set.'
 
 # A way to use the name of the script as part of the environment variables.
@@ -122,7 +122,7 @@ EnvComplexExampleVar=\$(printf '%s_COMPLEX_EXAMPLE' \"\$ScriptName\" | tr '[a-z]
 EnvComplexExampleValue=\$(eval printf '%s' \\\"\\$\$EnvComplexExampleVar\\\")
 ComplexExample=\${EnvComplexExampleValue:-'example'}
 
-[ \"\$EnvComplexExampleValue\" ] && ComplexExampleStatus=\"Currently: \033[1;34m\$EnvComplexExampleVar\033[0m=\$ComplexExample\" || \\
+[ \"\$EnvComplexExampleValue\" ] && ComplexExampleStatus=\"Currently \033[1;34m\$EnvComplexExampleVar\033[0m=\$ComplexExample\" || \\
     ComplexExampleStatus=\"Currently \033[1;34m\$EnvComplexExampleVar\033[0m is not set.\"
 
 HelpMessage=\"\033[32m\$ScriptName\033[0m \$Version

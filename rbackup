@@ -10,7 +10,7 @@ EnvConfigFileVar=$(printf '%s_CONFIG' "$ScriptName" | tr '[a-z]' '[A-Z]')
 EnvConfigFileValue=$(eval printf '%s' \$$EnvConfigFileVar)
 ConfigFile=${EnvConfigFileValue:-$HOME/.config/$ScriptName/config}
 
-[ "$EnvConfigFileValue" ] && ConfigFileStatus="Currently: \033[1;34m$EnvConfigFileVar\033[0m=$ConfigFile" || \
+[ "$EnvConfigFileValue" ] && ConfigFileStatus="Currently \033[1;34m$EnvConfigFileVar\033[0m=$ConfigFile" || \
     ConfigFileStatus="Currently \033[1;34m$EnvConfigFileVar\033[0m is not set."
 
 HelpMessage="\033[32m$ScriptName\033[0m $Version

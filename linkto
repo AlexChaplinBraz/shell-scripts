@@ -12,10 +12,10 @@ EnvSelectedFilesVar=$(printf '%s_TEMP' "$ScriptName" | tr '[a-z]' '[A-Z]')
 EnvSelectedFilesValue=$(eval printf '%s' \"\$$EnvSelectedFilesVar\")
 SelectedFiles=${EnvSelectedFilesValue:-/tmp/$ScriptName}
 
-[ "$LOCAL_BIN" ] && LocalBinStatus="Currently: \033[1;34mLOCAL_BIN\033[0m=$LOCAL_BIN" || \
+[ "$LOCAL_BIN" ] && LocalBinStatus="Currently \033[1;34mLOCAL_BIN\033[0m=$LOCAL_BIN" || \
     LocalBinStatus='Currently \033[1;34mLOCAL_BIN\033[0m is not set.'
 
-[ "$EnvSelectedFilesValue" ] && SelectedFilesStatus="Currently: \033[1;34m$EnvSelectedFilesVar\033[0m=$SelectedFiles" || \
+[ "$EnvSelectedFilesValue" ] && SelectedFilesStatus="Currently \033[1;34m$EnvSelectedFilesVar\033[0m=$SelectedFiles" || \
     SelectedFilesStatus="Currently \033[1;34m$EnvSelectedFilesVar\033[0m is not set."
 
 HelpMessage="\033[32m$ScriptName\033[0m $Version
