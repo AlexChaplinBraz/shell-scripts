@@ -78,7 +78,7 @@ if [ "$ChosenMenu" = "$MenuSimple" ]; then
     Search=$(printf '' | dmenu -p 'Simple search:')
     [ -z "$Search" ] && exit 1
 
-    printf '%s\n' "$Search" >> "$LSHARE/dytsearchhistory"
+    printf '%s\n' "$Search" >> "$XDG_DATA_HOME/dytsearchhistory"
 
     YTID=$(youtube-viewer --no-interactive "$Search" \
         | sed '/^$/d' \
@@ -86,7 +86,7 @@ if [ "$ChosenMenu" = "$MenuSimple" ]; then
         | dmenu -i -l 30 -p 'Select video:')
     [ -z "$YTID" ] && exit 1
 
-    printf '%s\n' "$YTID" >> "$LSHARE/dytvideohistory"
+    printf '%s\n' "$YTID" >> "$XDG_DATA_HOME/dytvideohistory"
 
     mpv "$YTURL${YTID##* }"
 
@@ -95,22 +95,22 @@ elif [ "$ChosenMenu" = "$MenuHistory" ]; then
         | dmenu -i -l 10 -p 'Which history?')
 
     if [ "$HistoryMenu" = '1. Search history.' ]; then
-        Search=$(cat "$LSHARE/dytsearchhistory" \
+        Search=$(cat "$XDG_DATA_HOME/dytsearchhistory" \
             | awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--] }' \
             | dmenu -i -l 30 -p 'Select previous search:')
         [ -z "$Search" ] && exit 1
 
-        printf '%s\n' "$Search" >> "$LSHARE/dytsearchhistory"
+        printf '%s\n' "$Search" >> "$XDG_DATA_HOME/dytsearchhistory"
 
         YTID=$(youtube-viewer --no-interactive "$Search" \
             | sed '/^$/d' \
             | nl -n ln \
             | dmenu -i -l 30 -p 'Select video:')
 
-        printf '%s\n' "$YTID" >> "$LSHARE/dytvideohistory"
+        printf '%s\n' "$YTID" >> "$XDG_DATA_HOME/dytvideohistory"
 
     elif [ "$HistoryMenu" = '2. Video history.' ]; then
-        YTID=$(cat "$LSHARE/dytvideohistory" \
+        YTID=$(cat "$XDG_DATA_HOME/dytvideohistory" \
             | awk '{a[i++]=$0} END {for (j=i-1; j>=0;) print a[j--] }' \
             | dmenu -i -l 30 -p 'Select previous video:')
 
