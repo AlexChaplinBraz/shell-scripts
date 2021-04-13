@@ -30,7 +30,7 @@ TTTTTT  T:::::T  TTTTTT  I::::I  M::::::::::M       M::::::::::M  E:::::E       
 "
 
 if Error=$(sleep $Duration 2>&1); then
-    [ "${1##*.}" = 'wav' ] && aplay "$1" &
+    [ "$1" ] && mpv --loop=no --msg-level=all=error "$1" &
     printf '%s' "$TimesUpMessage" | dmenu -l 30
 else
     printf '%s' "$Error" | dmenu -l 30 -p 'ERROR:'
