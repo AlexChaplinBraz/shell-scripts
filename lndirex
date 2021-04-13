@@ -1,0 +1,55 @@
+#!/usr/bin/env sh
+
+# Link all executable files inside one directory into another.
+
+ScriptName=${0##*/}
+Version=1.0.0
+
+HelpMessage="\033[32m$ScriptName\033[0m $Version
+Alexander Chaplin Braz <contact@alexchaplinbraz.com>
+
+Link all the executable files inside one directory into another one,
+replacing any existing links.
+
+\033[33mUSAGE:\033[0m
+    $ScriptName <SOURCE_DIR> <TARGET_DIR>
+    $ScriptName [FLAG]
+
+\033[33mFLAGS:\033[0m
+    \033[32m-h\033[0m, \033[32m--help\033[0m       Print help and exit.
+    \033[32m-v\033[0m, \033[32m--version\033[0m    Print version and exit.
+
+\033[33mARGS:\033[0m
+    \033[32m<SOURCE_DIR>\033[0m    Path to directory with executables to be linked.
+                    Can pass '-c' to use current directory.
+    \033[32m<TARGET_DIR>\033[0m    Path to directory where to link all the executables.
+                    Can pass '-b' to use LOCAL_BIN.
+"
+
+error() {
+    printf "\033[1;31m${2:-ERROR}\033[0m: %s.\nTry '%s --help' for more information.\n" \
+           "$1" "$ScriptName" 1>&2
+    exit 1
+}
+
+case $1 in
+    -h|--help) printf '%b' "$HelpMessage"; exit 0 ;;
+    -v|--version) printf '%s\n' "$Version"; exit 0 ;;
+esac
+
+[ -z "$1" ] && error 'a source directory is required'
+[ "$1" = '-c' ] && SourceDir=$(pwd)
+[ -z "$SourceDir" ] && SourceDir=${1%/}
+[ ! -d "$SourceDir" ] && error "'$SourceDir' is not a valid source directory"
+
+[ -z "$2" ] && error 'a target directory is required'
+[ "$2" = '-b' ] && [ -z "$LOCAL_BIN" ] && error 'LOCAL_BIN is not set'
+[ "$2" = '-b' ] && [ ! -d "$LOCAL_BIN" ] && error "'$LOCAL_BIN' is not a valid directory"
+[ "$2" = '-b' ] && TargetDir=${LOCAL_BIN%/}
+[ -z "$TargetDir" ] && TargetDir=${2%/}
+[ ! -d "$TargetDir" ] && error "'$TargetDir' is not a valid target directory"
+
+Files=$(find "$SourceDir" -maxdepth 1 -type f -perm /111 -exec basename {} \; )
+
+for file in $Files; do ln -vsf "$SourceDir/$file" "$TargetDir/$file"; done
+

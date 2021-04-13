@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+# Pseudo alias for calcurse to open with custom directories.
+
+export PATH=$DEFAULT_PATH
+exec calcurse -D "${XDG_DATA_HOME:-$HOME/.local/share}/calcurse" -C "${XDG_CONFIG_HOME:-$HOME/.config}/calcurse" "$@"
+

@@ -1,0 +1,45 @@
+#!/usr/bin/env sh
+
+# Fix permissions on files and directories copied from Windows.
+
+ScriptName=${0##*/}
+Version=1.0.0
+
+HelpMessage="\033[32m$ScriptName\033[0m $Version
+Alexander Chaplin Braz <contact@alexchaplinbraz.com>
+
+Fix permissions recursively on files and directories copied from Windows by
+setting them to 644 and 775 respectively.
+
+CAUTION: could screw up the system if used incorrectly.
+
+\033[33mUSAGE:\033[0m
+    $ScriptName [PATH]
+    $ScriptName [FLAG]
+
+\033[33mFLAGS:\033[0m
+    \033[32m-h\033[0m, \033[32m--help\033[0m       Print help and exit.
+    \033[32m-v\033[0m, \033[32m--version\033[0m    Print version and exit.
+
+\033[33mARGS:\033[0m
+    \033[32m[PATH]\033[0m    Path to directory from which to start changing permissions.
+              Defaults to current directory.
+"
+
+error() {
+    printf "\033[1;31m${2:-ERROR}\033[0m: %s.\nTry '%s --help' for more information.\n" \
+        "$1" "$ScriptName" 1>&2
+    exit 1
+}
+
+case $1 in
+    -h|--help) printf '%b' "$HelpMessage"; exit 0 ;;
+    -v|--version) printf '%s\n' "$Version"; exit 0 ;;
+    *) Dir=${1:-.} ;;
+esac
+
+[ ! -d "$Dir" ] && error "'$Dir' is not a valid directory"
+
+find "$Dir" -type d -exec chmod 775 {} \;
+find "$Dir" -type f -exec chmod 644 {} \;
+

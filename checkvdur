@@ -1,0 +1,57 @@
+#!/usr/bin/env sh
+
+# Check total duration of all videos in current directory.
+
+ScriptName=${0##*/}
+Version=1.0.0
+Deps='ffmpeg bc'
+
+HelpMessage="\033[32m$ScriptName\033[0m $Version
+Alexander Chaplin Braz <contact@alexchaplinbraz.com>
+
+Check total duration of all videos in current directory based on the passed
+file extension.
+
+\033[33mUSAGE:\033[0m
+    $ScriptName <EXT>
+    $ScriptName [FLAG]
+
+\033[33mFLAGS:\033[0m
+    \033[32m-h\033[0m, \033[32m--help\033[0m       Print help and exit.
+    \033[32m-v\033[0m, \033[32m--version\033[0m    Print version and exit.
+
+\033[33mARGS:\033[0m
+    \033[32m<EXT>\033[0m    Video extension (without the .)
+
+\033[33mDEPENDENCIES:\033[0m
+    $Deps
+"
+
+error() {
+    printf "\033[1;31m${2:-ERROR}\033[0m: %s.\nTry '%s --help' for more information.\n" \
+        "$1" "$ScriptName" 1>&2
+    exit 1
+}
+
+case $1 in
+    -h|--help|'') printf '%b' "$HelpMessage"; exit 0 ;;
+    -v|--version) printf '%s\n' "$Version"; exit 0 ;;
+    *) Ext=$1 ;;
+esac
+
+for dep in $Deps; do ! command -v $dep 1>/dev/null && MissingDeps="$MissingDeps $dep"; done
+[ "$MissingDeps" ] && error "missing dependencies:$MissingDeps"
+
+find . -maxdepth 1 | grep -q $Ext$ || error "no files with '$Ext' extension found"
+
+env TZ=UTC+0 LC_ALL=C \
+date +'%j %T.%N' --date=@$(
+    for i in *.$Ext; do
+        ffmpeg -i "$i" 2>&1 \
+        | awk -F: '/Duration:/{print $2*3600+$3*60+$4}';
+    done \
+    | paste -sd+ \
+    | bc) \
+| awk '{print $1-1 "d",$2}' \
+| sed 's/[.0]*$//'
+

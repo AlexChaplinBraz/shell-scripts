@@ -1,0 +1,256 @@
+#!/usr/bin/env sh
+
+# Quickly start creating a new shell script.
+
+ScriptName=${0##*/}
+Version=1.0.1
+Deps=fzf
+
+ProjectsDir=${PROJECTS_DIR:-.}
+BinDir=${LOCAL_BIN:-$HOME/.local/bin}
+
+EnvCreatorNameVar=$(printf '%s_NAME' "$ScriptName" | tr '[a-z]' '[A-Z]')
+EnvCreatorNameValue=$(eval printf '%s' \"\$$EnvCreatorNameVar\")
+CreatorName=${EnvCreatorNameValue:-'John Doe'}
+
+EnvCreatorEmailVar=$(printf '%s_EMAIL' "$ScriptName" | tr '[a-z]' '[A-Z]')
+EnvCreatorEmailValue=$(eval printf '%s' \"\$$EnvCreatorEmailVar\")
+CreatorEmail=${EnvCreatorEmailValue:-'john@doe.email'}
+
+[ "$PROJECTS_DIR" ] && ProjectsDirStatus="Currently \033[1;34mPROJECTS_DIR\033[0m=$PROJECTS_DIR" || \
+    ProjectsDirStatus='Currently \033[1;34mPROJECTS_DIR\033[0m is not set.'
+
+[ "$LOCAL_BIN" ] && LocalBinStatus="Currently \033[1;34mLOCAL_BIN\033[0m=$LOCAL_BIN" || \
+    LocalBinStatus='Currently \033[1;34mLOCAL_BIN\033[0m is not set.'
+
+[ "$EDITOR" ] && EditorStatus="Currently \033[1;34mEDITOR\033[0m=$EDITOR" || \
+    EditorStatus='Currently \033[1;34mEDITOR\033[0m is not set.'
+
+[ "$EnvCreatorNameValue" ] && CreatorNameStatus="Currently \033[1;34m$EnvCreatorNameVar\033[0m=$CreatorName" || \
+    CreatorNameStatus="Currently \033[1;34m$EnvCreatorNameVar\033[0m is not set."
+
+[ "$EnvCreatorEmailValue" ] && CreatorEmailStatus="Currently \033[1;34m$EnvCreatorEmailVar\033[0m=$CreatorEmail" || \
+    CreatorEmailStatus="Currently \033[1;34m$EnvCreatorEmailVar\033[0m is not set."
+
+HelpMessage="\033[32m$ScriptName\033[0m $Version
+Alexander Chaplin Braz <contact@alexchaplinbraz.com>
+
+Start creating a new shell script fast, filled with lots of useful code. Some
+may not be necessary, so delete if unused.
+
+First write the name of the script then select where to create it.
+
+Can set where to search for directories with \033[1;34mPROJECTS_DIR\033[0m, but if not set
+it defaults to current directory.
+$ProjectsDirStatus
+
+Can set where to link the newly created script with \033[1;34mLOCAL_BIN\033[0m, but if not set
+it defaults to: $HOME/.local/bin
+$LocalBinStatus
+
+Needs \033[1;34mEDITOR\033[0m set to open script after creating it.
+$EditorStatus
+
+Can set the name of the creator with \033[1;34m$EnvCreatorNameVar\033[0m, but if not set
+it defaults to a placeholder.
+$CreatorNameStatus
+
+Can set the email of the creator with \033[1;34m$EnvCreatorEmailVar\033[0m, but if not set
+it defaults to a placeholder.
+$CreatorEmailStatus
+
+\033[33mUSAGE:\033[0m
+    $ScriptName [FLAG]
+
+\033[33mFLAGS:\033[0m
+    \033[32m-h\033[0m, \033[32m--help\033[0m         Print help and exit.
+    \033[32m-d\033[0m, \033[32m--dont-link\033[0m    Don't link script into bin.
+    \033[32m-v\033[0m, \033[32m--version\033[0m      Print version and exit.
+
+\033[33mDEPENDENCIES:\033[0m
+    $Deps
+"
+
+error() {
+    printf "\033[1;31m${2:-ERROR}\033[0m: %s.\nTry '%s --help' for more information.\n" \
+        "$1" "$ScriptName" 1>&2
+    exit 1
+}
+
+case $1 in
+    -h|--help) printf '%b' "$HelpMessage"; exit 0 ;;
+    -v|--version) printf '%s\n' "$Version"; exit 0 ;;
+    -d|--dont-link) DontLink=true ;;
+    '') ;;
+    *) error "unknown argument '$1'"
+esac
+
+for dep in $Deps; do ! command -v $dep 1>/dev/null && MissingDeps="$MissingDeps $dep"; done
+[ "$MissingDeps" ] && error "missing dependencies:$MissingDeps"
+
+[ -d "$ProjectsDir" ] || error "'$ProjectsDir' is not a valid directory"
+[ -d "$BinDir" ] || error "'$BinDir' is not a valid directory"
+
+printf 'Name the shell script: '
+read Name
+[ -z "$Name" ] && exit 1
+
+Directory=$(find $ProjectsDir -type d -not -path '*/\.git*' \
+	| fzf --prompt="Choose where to create '$Name': ")
+[ -z "$Directory" ] && exit 1
+
+Script="$Directory/$Name"
+
+ScriptTemplate="#!/usr/bin/env sh
+
+# Short description.
+
+ScriptName=\${0##*/}
+Version=1.0.0
+# Space separated:
+Deps=''
+
+# Simple way for using environment variables for settings with default fallback.
+SimpleExample=\${SIMPLE_EXAMPLE:-\$HOME/example}
+
+# Simple way for notifying the user of the state of the environment variables inside the help message.
+[ \"\$SIMPLE_EXAMPLE\" ] && SimpleExampleStatus=\"Currently \033[1;34mSIMPLE_EXAMPLE\033[0m=\$SIMPLE_EXAMPLE\" || \\
+    SimpleExampleStatus='Currently \033[1;34mSIMPLE_EXAMPLE\033[0m is not set.'
+
+# A way to use the name of the script as part of the environment variables.
+EnvComplexExampleVar=\$(printf '%s_COMPLEX_EXAMPLE' \"\$ScriptName\" | tr '[a-z]' '[A-Z]')
+EnvComplexExampleValue=\$(eval printf '%s' \\\"\\$\$EnvComplexExampleVar\\\")
+ComplexExample=\${EnvComplexExampleValue:-'example'}
+
+[ \"\$EnvComplexExampleValue\" ] && ComplexExampleStatus=\"Currently \033[1;34m\$EnvComplexExampleVar\033[0m=\$ComplexExample\" || \\
+    ComplexExampleStatus=\"Currently \033[1;34m\$EnvComplexExampleVar\033[0m is not set.\"
+
+HelpMessage=\"\033[32m\$ScriptName\033[0m \$Version
+$CreatorName <$CreatorEmail>
+
+Description.
+
+Needs \033[1;34mSIMPLE_EXAMPLE\033[0m set to ...
+\$SimpleExampleStatus
+
+Can set the ... with \033[1;34m\$EnvComplexExampleVar\033[0m, but if not set
+it defaults to a placeholder.
+\$ComplexExampleStatus
+
+\033[33mUSAGE:\033[0m
+    \$ScriptName <PATH>
+    \$ScriptName [FLAGS]
+
+\033[33mFLAGS:\033[0m
+    \033[32m-h\033[0m, \033[32m--help\033[0m       Print help and exit.
+    \033[32m-v\033[0m, \033[32m--version\033[0m    Print version and exit.
+
+\033[33mOPTIONS:\033[0m
+    \033[32m-e\033[0m, \033[32m--example <EXAMPLE_ARG>\033[0m    Example option with obligatory argument.
+
+\033[33mARGS:\033[0m
+    \033[32m<PATH>...\033[0m    Path to somewhere.
+
+\033[33mCOMMANDS:\033[0m
+    \033[32mcommand\033[0m    A command.
+
+\033[33mDEPENDENCIES:\033[0m
+    \$Deps
+\"
+
+# Print error and exit. The colour is red.
+# First argument is the error text.
+# Second argument is optional and lets one change the default ERROR text
+# to something custom.
+error() {
+    printf \"\033[1;31m\${2:-ERROR}\033[0m: %s.\nTry '%s --help' for more information.\n\" \\
+        \"\$1\" \"\$ScriptName\" 1>&2
+    exit 1
+}
+
+# Print warning without exiting. The colour is yellow.
+# First argument is the warning text.
+# Second argument is optional and lets one change the default WARNING text
+# to something custom.
+warning() { printf \"\033[1;33m\${2:-WARNING}\033[0m: %s.\n\" \"\$1\" 1>&2; }
+
+# Print info without exiting. The colour is blue.
+# First argument is the info text.
+# Second argument is optional and lets one change the default INFO text
+# to something custom.
+info() { printf \"\033[1;34m\${2:-INFO}\033[0m: %s.\n\" \"\$1\" 1>&2; }
+
+# Check argument for type and existence.
+# Usage: check_arg \"\$2\" \"type1|type2|type3\" \"\$1\"
+# Where \$1 is the option and \$2 is the argument.
+# Read as: check argument (\$2) for these types in option \$1.
+# Requires shifting afterward making use of the argument.
+check_arg() {
+    if printf '%s' \"\$1\" | grep -qE '^\+?[[:digit:]]+$';then
+        Type='positive integer'
+    elif printf '%s' \"\$1\" | grep -qE '^-[[:digit:]]+$';then
+        Type='negative integer'
+    elif printf '%s' \"\$1\" | grep -qE '^\+?[[:digit:]]*\.?([[:digit:]]+)$';then
+        Type='positive float'
+    elif printf '%s' \"\$1\" | grep -qE '^-[[:digit:]]*\.?([[:digit:]]+)$';then
+        Type='negative float'
+    elif printf '%s' \"\$1\" | grep -qE '^[[:alpha:]]+$';then
+        Type='alphabetic'
+    elif printf '%s' \"\$1\" | grep -qE '^[[:alnum:]]+$';then
+        Type='alphanumeric'
+    elif printf '%s' \"\$1\" | grep -qE '^--?[[:alpha:]]+$' || [ -z \"\$1\" ];then
+        Missing=true
+    else
+        Type='UNKNOWN'
+    fi
+
+    ExpectedType=\$(printf '%s' \"\$2\" | sed 's/|/ or /g')
+
+    if [ \$Missing ]; then
+        error \"option '\$3' expects \$ExpectedType\" 'MISSING ARGUMENT'
+    elif ! printf '%s' \"\$Type\" | grep -qE \"\$2\"; then
+        error \"'\$3' expects \$ExpectedType, got \$Type '\$1'\" 'TYPE ERROR'
+    fi
+}
+
+# Advanced parameter handler:
+while [ \"\$#\" -gt 0 ]; do
+    case \$1 in
+        -[[:alpha:]][[:alpha:]]*|-[[:alpha:]][[:digit:]]*)
+            opts=\$(printf '%s' \"\$1\" \\
+                | sed 's/-//;s/[[:alpha:]]/ -&/g;s/-[[:alpha:]]/& /g')
+            shift
+            set -- \$opts \"\$@\"
+            continue ;;
+        -h|--help) printf '%b' \"\$HelpMessage\"; exit 0 ;;
+        -v|--version) printf '%s\n' \"\$Version\"; exit 0 ;;
+        -[[:alpha:]]|--[[:alpha:]]*) error \"unknown option \$1\" ;;
+        *) ;; # Handle positional arguments.
+    esac
+    shift
+done
+
+# Simple single argument handler:
+case \$1 in
+    # No arguments prints help with '' here:
+    -h|--help|'') printf '%b' \"\$HelpMessage\"; exit 0 ;;
+    -v|--version) printf '%s\n' \"\$Version\"; exit 0 ;;
+    # Or continue running with no arguments like this:
+    '') ;;
+    *) error \"unknown argument '\$1'\" ;;
+esac
+
+# Check dependencies:
+for dep in \$Deps; do ! command -v \$dep 1>/dev/null && MissingDeps=\"\$MissingDeps \$dep\"; done
+[ \"\$MissingDeps\" ] && error \"missing dependencies:\$MissingDeps\"
+
+"
+
+printf '%s' "$ScriptTemplate" > "$Script"
+
+chmod +x "$Script"
+[ -z $DontLink ] && ln -sf "$Script" "$BinDir"
+
+[ -z "$EDITOR" ] && error "script created at '$Script' but can't open because EDITOR isn't set"
+$EDITOR "$Script"
+

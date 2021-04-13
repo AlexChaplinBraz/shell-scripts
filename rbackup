@@ -1,0 +1,219 @@
+#!/usr/bin/env sh
+
+# A fairly great backup solution.
+
+ScriptName=${0##*/}
+Version=1.0.1
+Deps='rsync timeout ping'
+
+EnvConfigFileVar=$(printf '%s_CONFIG' "$ScriptName" | tr '[a-z]' '[A-Z]')
+EnvConfigFileValue=$(eval printf '%s' \$$EnvConfigFileVar)
+ConfigFile=${EnvConfigFileValue:-$HOME/.config/$ScriptName/config}
+
+[ "$EnvConfigFileValue" ] && ConfigFileStatus="Currently \033[1;34m$EnvConfigFileVar\033[0m=$ConfigFile" || \
+    ConfigFileStatus="Currently \033[1;34m$EnvConfigFileVar\033[0m is not set."
+
+HelpMessage="\033[32m$ScriptName\033[0m $Version
+Alexander Chaplin Braz <contact@alexchaplinbraz.com>
+
+Can handle multiple backups in series with optional dated versioning and
+exclusions file for each backup.
+
+Also handles remote servers by checking connectivity before syncing. If
+unavailable, it's skipped and the next backup starts. Same for errors
+with the configuration.
+
+Additionally, logging the output of the script is supported.
+
+More info about configuring backup units in the config.
+
+Can set the full path to the configuration file with \033[1;34m$EnvConfigFileVar\033[0m,
+but if not set it defaults to: $HOME/.config/$ScriptName/config
+$ConfigFileStatus
+
+\033[33mUSAGE:\033[0m
+    $ScriptName [FLAG]
+    $ScriptName [PATH]
+
+\033[33mFLAGS:\033[0m
+    \033[32m-c\033[0m, \033[32m--create-config\033[0m     Create template config. Overwrites existing config.
+    \033[32m-h\033[0m, \033[32m--help\033[0m              Print help and exit.
+    \033[32m-p\033[0m, \033[32m--print-template\033[0m    Print the template config to stdout.
+    \033[32m-v\033[0m, \033[32m--version\033[0m           Print version and exit.
+
+\033[33mARGS:\033[0m
+    \033[32m[PATH]\033[0m    Full path to the configuration file.
+
+\033[33mDEPENDENCIES:\033[0m
+    $Deps
+"
+
+ConfigTemplate="# This is essentially a script that is loaded and run inside $ScriptName to
+# get the shell variables. That means you could technically run other code too.
+# Avoid doing that if you don't know what you're doing.
+
+# Maximum number of units to loop through.
+# Doesn't matter even if it's 1000, just make sure it's not less than the
+# largest enabled unit number, since that'd mean the loop won't reach it.
+UnitCount=10
+# Leave blank or disable logging, write anything to enable.
+# This simply redirects all output of $ScriptName to the log file, appending
+# everything to the end so it goes from oldest to newest.
+EnableLogging=
+# Location of the log file.
+LogFile=~/.config/$ScriptName/log
+# Maximum number of lines to keep in the log. When this amount is reached,
+# the oldest lines at the top are stripped. Keep in mind that a normal backup
+# without any errors only takes up 19 lines, which is around 565 bytes.
+# So the defaul value would allow to hold a little over 1000 transfers
+# and the size of the file would be around 0.6 megabytes.
+MaxLogLineAmount=20000
+
+# Name shown over stats.
+Label1=
+# Leave blank to disable this unit, write anything to enable.
+Enabled1=
+# Full path to backup from. Remember that a trailing slash means the contents of
+# the directory, while no trailing slash means the directory itself.
+BackupFrom1=
+# Full path to backup to.
+BackupTo1=
+# Full path to exclusions file, with each exclusion on one line.
+# Can leave blank to disable.
+ExclusionsFile1=
+# Full path to directory where to store deleted/modified files.
+# Can leave blank to disable.
+VersioningDir1=
+
+# Rinse and repeat for as many more backups as needed, keeping in mind that
+# a \"unit\" is the group of variables ending with the same number.
+Label2=
+Enabled2=
+BackupFrom2=
+BackupTo2=
+ExclusionsFile2=
+VersioningDir2=
+
+Label3=
+Enabled3=
+BackupFrom3=
+BackupTo3=
+ExclusionsFile3=
+VersioningDir3=
+
+Label4=
+Enabled4=
+BackupFrom4=
+BackupTo4=
+ExclusionsFile4=
+VersioningDir4=
+
+"
+
+error() {
+    printf "\033[1;31m${2:-ERROR}\033[0m: %s.\nTry '%s --help' for more information.\n" \
+        "$1" "$ScriptName" 1>&2
+    exit 1
+}
+
+info() { printf "\033[1;34m${2:-INFO}\033[0m: %s.\n" "$1" 1>&2; }
+
+error_loop() { printf "\033[1;31m${2:-ERROR}\033[0m: %s.\n" "$1" 1>&2; }
+
+cannot_connect_to() {
+    if ! timeout 3 ping -c1 -w1 -q "$1" >/dev/null; [ "$?" -eq 0 ];then
+        error_loop "cannot reach '$1'"
+        return 0
+    else
+        return 1
+    fi
+}
+
+case $1 in
+    -h|--help) printf '%b' "$HelpMessage"; exit 0 ;;
+    -v|--version) printf '%s\n' "$Version"; exit 0 ;;
+    -c|--create-config)
+        mkdir -p "${ConfigFile%/*}"
+        printf '%s' "$ConfigTemplate" > "$ConfigFile"
+        info "template config created at '$ConfigFile'"
+        printf 'Read it for instructions on how to set everything up.\n'
+        exit 0 ;;
+    -p|--print-template) printf '%s' "$ConfigTemplate"; exit 0 ;;
+    '') ;;
+    *) ConfigFile=$1 ;;
+esac
+
+for dep in $Deps; do ! command -v $dep 1>/dev/null && MissingDeps="$MissingDeps $dep"; done
+[ "$MissingDeps" ] && error "missing dependencies:$MissingDeps"
+
+[ ! -f "$ConfigFile" ] && error "'$ConfigFile' is not a valid file"
+
+. "$ConfigFile"
+
+run_backups() {
+    [ "$EnableLogging" ] && Redirect='2>&1'
+
+    i=1; while [ $i -le ${UnitCount:-10} ]; do
+        unset Enabled Label BackupFrom BackupTo ExclusionsFile VersioningDir ExcludeFrom BackupDir \
+            BackupFlag Versioning Date ServerFrom ServerTo tmp
+
+        Enabled=$(eval printf '%s' \"\$Enabled$i\")
+        Label=$(eval printf '%s' \"\$Label$i\")
+        BackupFrom=$(eval printf '%s' \"\$BackupFrom$i\")
+        BackupTo=$(eval printf '%s' \"\$BackupTo$i\")
+        ExclusionsFile=$(eval printf '%s' \"\$ExclusionsFile$i\")
+        VersioningDir=$(eval printf '%s' \"\$VersioningDir$i\")
+
+        i=$(( i + 1 )) && [ -z "$Enabled" ] && continue
+
+        Date=$(date +'%Y-%m-%d.%H-%M-%S')
+
+        printf '\n===== %s | %s =====\n' "$Label" "$Date"
+
+        [ -z "$Label" ]  && error_loop "Label is empty" && continue
+        [ -z "$BackupFrom" ]  && error_loop "BackupFrom is empty" && continue
+        [ -z "$BackupTo" ]  && error_loop "BackupTo is empty" && continue
+
+        ServerFrom=$(tmp=${BackupFrom##*@}; printf '%s' "${tmp%%:*}")
+        [ "$ServerFrom" = "$BackupFrom" ] && unset ServerFrom
+        [ "$ServerFrom" ] && cannot_connect_to "$ServerFrom" && continue
+        [ -z "$ServerFrom" ] && [ ! -d "$BackupFrom" ] && \
+            error_loop "'$BackupFrom' is not a valid BackupTo directory" && continue
+
+        ServerTo=$(tmp=${BackupTo##*@}; printf '%s' "${tmp%%:*}")
+        [ "$ServerTo" = "$BackupTo" ] && unset ServerTo
+        [ "$ServerTo" ] && cannot_connect_to "$ServerTo" && continue
+        [ -z "$ServerTo" ] && [ ! -d "$BackupTo" ] && \
+            error_loop "'$BackupTo' is not a valid BackupTo directory" && continue
+
+        [ "$ExclusionsFile" ] && [ ! -f "$ExclusionsFile" ] && \
+            error_loop "'$ExclusionsFile' is not a valid ExclusionsFile file" && continue
+        [ "$ExclusionsFile" ] && ExcludeFrom="--exclude-from=$ExclusionsFile"
+
+        [ "$VersioningDir" ] && [ ! -d "$VersioningDir" ] && \
+            error_loop "'$VersioningDir' is not a valid VersioningDir directory" && continue
+        [ "$VersioningDir" ] && Versioning="${VersioningDir%/}/$Date"
+        [ "$VersioningDir" ] && mkdir -p "$Versioning"
+        [ "$VersioningDir" ] && BackupDir="--backup-dir=$Versioning"
+        [ "$VersioningDir" ] && BackupFlag="-b"
+
+        eval rsync -ah --stats --delete-before --delete-excluded \
+            $BackupFlag "$BackupDir" "$ExcludeFrom" "$BackupFrom" "$BackupTo" $Redirect
+
+        [ "$VersioningDir" ] && rmdir "$Versioning" 2>/dev/null
+    done
+}
+
+if [ "$EnableLogging" ]; then
+    mkdir -p "${LogFile%/*}"
+    run_backups >> "$LogFile" 2>&1
+    LogLineCount=$(wc -l "$LogFile")
+    if [ ${LogLineCount% *} -gt $MaxLogLineAmount ]; then
+        mv "$LogFile" "$LogFile.old"
+        tail -n $MaxLogLineAmount "$LogFile.old" > "$LogFile"
+        rm "$LogFile.old"
+    fi
+else
+    run_backups
+fi
+

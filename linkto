@@ -1,0 +1,77 @@
+#!/usr/bin/env sh
+
+# A link creation helper, mainly used for linking scripts to local bin.
+
+ScriptName=${0##*/}
+Version=1.0.0
+Deps=ranger
+
+BinDir=${LOCAL_BIN:-$HOME/.local/bin}
+
+EnvSelectedFilesVar=$(printf '%s_TEMP' "$ScriptName" | tr '[a-z]' '[A-Z]')
+EnvSelectedFilesValue=$(eval printf '%s' \"\$$EnvSelectedFilesVar\")
+SelectedFiles=${EnvSelectedFilesValue:-/tmp/$ScriptName}
+
+[ "$LOCAL_BIN" ] && LocalBinStatus="Currently \033[1;34mLOCAL_BIN\033[0m=$LOCAL_BIN" || \
+    LocalBinStatus='Currently \033[1;34mLOCAL_BIN\033[0m is not set.'
+
+[ "$EnvSelectedFilesValue" ] && SelectedFilesStatus="Currently \033[1;34m$EnvSelectedFilesVar\033[0m=$SelectedFiles" || \
+    SelectedFilesStatus="Currently \033[1;34m$EnvSelectedFilesVar\033[0m is not set."
+
+HelpMessage="\033[32m$ScriptName\033[0m $Version
+Alexander Chaplin Braz <contact@alexchaplinbraz.com>
+
+Link creation helper using 'ranger' to symlink all selected files to the
+specified directory. Particularly useful for linking scripts to local bin.
+
+Can set local bin with \033[1;34mLOCAL_BIN\033[0m, but if not set
+it defaults to: $HOME/.local/bin
+$LocalBinStatus
+
+Can set temp file with \033[1;34m$EnvSelectedFilesVar\033[0m, but if not set
+it defaults to: /tmp/$ScriptName
+$SelectedFilesStatus
+
+\033[33mUSAGE:\033[0m
+    $ScriptName <PATH|-b|--local-bin>
+    $ScriptName [FLAG]
+
+\033[33mFLAGS:\033[0m
+    \033[32m-b\033[0m, \033[32m--local-bin\033[0m    Symlink to LOCAL_BIN.
+    \033[32m-h\033[0m, \033[32m--help\033[0m         Print help and exit.
+    \033[32m-v\033[0m, \033[32m--version\033[0m      Print version and exit.
+
+\033[33mARGS:\033[0m
+    \033[32m<PATH>\033[0m    Path where to link selected files.
+
+\033[33mDEPENDENCIES:\033[0m
+    $Deps
+"
+
+error() {
+    printf "\033[1;31m${2:-ERROR}\033[0m: %s.\nTry '%s --help' for more information.\n" \
+        "$1" "$ScriptName" 1>&2
+    exit 1
+}
+
+case $1 in
+    -h|--help|'') printf '%b' "$HelpMessage"; exit 0 ;;
+    -v|--version) printf '%s\n' "$Version"; exit 0 ;;
+	-b|--local-bin) TargetDir=$BinDir ;;
+    *) TargetDir=$1 ;;
+esac
+
+for dep in $Deps; do ! command -v $dep 1>/dev/null && MissingDeps="$MissingDeps $dep"; done
+[ "$MissingDeps" ] && error "missing dependencies:$MissingDeps"
+
+[ ! -d "$TargetDir" ] && error "'$TargetDir' is not a valid directory"
+[ ! -d "${SelectedFiles%/*}" ] && error "'${SelectedFiles%/*}' is not a valid directory for a temp file"
+
+ranger --choosefiles="$SelectedFiles"
+[ -e "$SelectedFiles" ] || exit 0
+
+IFS=${IFS#??}
+for line in $(cat "$SelectedFiles"); do ln -vsf "$line" "$TargetDir"; done
+
+rm "$SelectedFiles" 2>/dev/null
+
