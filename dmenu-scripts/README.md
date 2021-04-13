@@ -1,12 +1,10 @@
 # Dmenu scripts
 
+**NOTE:** These scripts will eventually be rewritten following my new standard.
+
 These are all the scripts I use where I implement dmenu in some way. I really
 love how flexible dmenu is, and I've made it a goal to make as many useful ones
 as possible.
-
-IMPORTANT: dmenu version 4.9 screws up the focus of windows after its use.
-Use 4.8 until that's fixed, because otherwise you have to change windows
-to refocus and be able to interact with the new one.
 
 Keep in mind that some scripts use 'sudo' to run some commands,
 which would require you to have it setup in a way that lets you run sudo
@@ -34,18 +32,10 @@ It lets you search through all the man pages' names and short descriptions,
 and open them. It's great for finding different versions of the same manual.
 I go more in-depth on it in the comments of the script.
 
-### dedit
-
-Quickly find all the files inside the specified folders and present them
-with dmenu. The selected file is opened with the $EDITOR. This is the
-second most useful one, since it eliminates the need to set a bookmark for
-each configuration file, script, note, etc. You need to edit the script
-to set your own folders.
-
 ### dpass
 
 Copy, add, edit and delete pass entries through a series of dmenu prompts.
-It requires [genrepass](https://github.com/AlexChaplinBraz/genrepass)
+It requires [genrepass](https://github.com/AlexChaplinBraz/genrepass-cli)
 to generate passwords and an already
 initiated password store. Git support is planned.
 
@@ -129,12 +119,6 @@ Pure Luke Smith ripoff.
 ### dyt
 
 Quickly search with youtube-viewer.
-
-### dnewsh
-
-Quickly create a shell script in a specified folder, make it executable,
-link it into local bin and open it with a little template already in it.
-Makes starting new scripts really painless.
 
 ### dwine
 

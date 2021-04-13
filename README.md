@@ -7,6 +7,16 @@ they are not.
 The help and error messages are colourised with ANSI codes (SRG), and if a program requires to be run as root it will be
 informed to the user. Configuration is handled through environment variables and somethimes config files.
 
+## dmenu-scripts
+
+This was previously a repo with only dmenu scripts, but will now hold all my shell scripts. My standards have gone up,
+so I'm gradually rewriting them. The goal is to have a choice of frontends, like is the case with `quickedit`, which is
+a rewrite of `dedit`.
+
+## Short descriptions of the scripts
+
+Learn more about them by reading their `HelpMessage` variable.
+
 ### newsh
 
 Creates an executable script linked to local bin from a template with lots of useful features and opens it with your
