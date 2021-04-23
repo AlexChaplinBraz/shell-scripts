@@ -80,6 +80,11 @@ CAUTION: careful where you run it, since you could screw your system up royally.
 
 Check total duration of all videos of the same extension inside the current directory.
 
+## Donate
+
+Please consider supporting me through [donate.alexchaplinbraz.com](https://donate.alexchaplinbraz.com/?project=4)
+to motivate me to keep working on this project.
+
 ## Legal
 
 MIT License.
