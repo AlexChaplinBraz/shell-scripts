@@ -160,6 +160,3 @@ Gets ignored if '--force-lower' is set.
 
 `-u | --unforce-lower`
 
-## Legal
-
-MIT License.
