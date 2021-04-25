@@ -80,6 +80,11 @@ CAUTION: careful where you run it, since you could screw your system up royally.
 
 Check total duration of all videos of the same extension inside the current directory.
 
+### genrepass
+
+This is the original shell script that [genrepass-cli](https://github.com/AlexChaplinBraz/genrepass-cli) is based on.
+My first big script, as it were.
+
 ## Donate
 
 Please consider supporting me through [donate.alexchaplinbraz.com](https://donate.alexchaplinbraz.com/?project=4)
