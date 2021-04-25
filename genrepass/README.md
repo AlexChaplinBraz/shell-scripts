@@ -19,7 +19,7 @@ but much easier to write password, for the rare occasion where you have
 to input it manualy, like on a smartphone you're not syncing them to.
 
 I wrote this for generating passwords in another one of my scripts called
-[dpass](https://github.com/AlexChaplinBraz/dmenu-scripts/blob/master/dpass),
+[dpass](https://github.com/AlexChaplinBraz/shell-scripts/blob/master/dmenu-scripts/dpass),
 which gives an easy way to copy, create, edit and delete pass entries.
 
 ## Dependencies
