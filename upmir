@@ -3,14 +3,20 @@
 # Update pacman's mirrorlist, ranked by speed.
 
 ScriptName=${0##*/}
-Version=1.0.0
-Deps=rate-arch-mirrors
+Version=1.0.1
+Deps='rate-mirrors date'
+
+Country=ES
 
 HelpMessage="\033[32m$ScriptName\033[0m $Version
 Alexander Chaplin Braz <contact@alexchaplinbraz.com>
 
 Update pacman's mirrorlist, ranked by speed.
+
 Must be run as root.
+
+Can change the country in the script itself.
+Currently: $Country
 
 \033[33mUSAGE:\033[0m
     $ScriptName
@@ -44,11 +50,18 @@ for dep in $Deps; do ! command -v $dep 1>/dev/null && MissingDeps="$MissingDeps 
 
 [ "$(id -u)" -ne 0 ] && error 'must be run as root'
 
-mv -f /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist-backup && \
-    info "a backup can be found at '/etc/pacman.d/mirrorlist-backup'" || \
-    error 'pacman mirrors backup failed'
+info 'fetching and testing mirrors..'
 
-rate-arch-mirrors | tee /dev/stderr > /etc/pacman.d/mirrorlist && \
+rate-mirrors --allow-root --entry-country $Country arch > /tmp/mirrorlist_$ScriptName || \
+    error 'failed to fetch new mirrors'
+
+CurrentDateTime=$(date +"%Y-%m-%d_%H-%M-%S")
+
+mv -f /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist_backup_$CurrentDateTime && \
+    info "a backup can be found at '/etc/pacman.d/mirrorlist_backup_$CurrentDateTime'" || \
+    error 'failed to create a backup'
+
+mv -f /tmp/mirrorlist_$ScriptName /etc/pacman.d/mirrorlist && \
     info 'pacman mirrors updated correctly' || \
-    error 'pacman mirrors update failed'
+    error 'failed to move new mirror list'
 
